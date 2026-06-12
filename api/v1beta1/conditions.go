@@ -59,6 +59,12 @@ const (
 	// OpenStackLightspeedMCPServerWaitingOpenStack
 	OpenStackLightspeedMCPServerWaitingOpenStack = "MCP server deployed, waiting for OpenStackControlPlane to become ready"
 
+	// OpenStackLightspeedMCPServerCreatingUser
+	OpenStackLightspeedMCPServerCreatingUser = "Creating OpenStack service user"
+
+	// OpenStackLightspeedMCPServerWaitingAC
+	OpenStackLightspeedMCPServerWaitingAC = "Waiting for application credential secret"
+
 	// OpenStackLightspeedMCPServerDisabledMessage
 	OpenStackLightspeedMCPServerDisabledMessage = "RHOSO MCP server is disabled (rhoso_mcps feature flag not set)"
 
