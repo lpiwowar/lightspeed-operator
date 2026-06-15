@@ -18,5 +18,4 @@ spec:
     lightspeedStackLogLevel: WARNING
     dataverseExporterLogLevel: DEBUG
   dev:
-    featureFlags:
-      - rhoso_mcps
+    featureFlags: []

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/openstack-k8s-operators/lib-common/modules/common/condition"
 	common_helper "github.com/openstack-k8s-operators/lib-common/modules/common/helper"
 	apiv1beta1 "github.com/openstack-k8s-operators/lightspeed-operator/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -113,6 +114,38 @@ func GetMCPServerURL() string {
 // ---------------------------------------------------------------------------
 // Reconciliation
 // ---------------------------------------------------------------------------
+
+// ReconcileMCPServerTask reconciles the MCP server as a ReconcileFunc.
+func (r *OpenStackLightspeedReconciler) ReconcileMCPServerTask(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+	rhosoMCPEnabled, err := isRHOSOMCPEnabled(instance)
+	if err != nil {
+		return fmt.Errorf("failed to parse dev config: %w", err)
+	}
+	if rhosoMCPEnabled {
+		openStackReady, mcpErr := r.ReconcileMCPServer(ctx, h, instance)
+		if mcpErr != nil {
+			instance.Status.Conditions.Set(condition.FalseCondition(
+				apiv1beta1.OpenStackLightspeedMCPServerReadyCondition,
+				condition.ErrorReason,
+				condition.SeverityWarning,
+				apiv1beta1.DeploymentCheckFailedMessage,
+				mcpErr.Error(),
+			))
+			return mcpErr
+		}
+		instance.Status.OpenStackReady = openStackReady
+	} else {
+		if err := r.cleanupMCPResources(ctx, h, instance); err != nil {
+			return err
+		}
+		instance.Status.OpenStackReady = false
+		instance.Status.Conditions.MarkTrue(
+			apiv1beta1.OpenStackLightspeedMCPServerReadyCondition,
+			apiv1beta1.OpenStackLightspeedMCPServerDisabledMessage,
+		)
+	}
+	return nil
+}
 
 // ReconcileMCPServer performs the reconciliation of the MCP server.
 // The MCP server runs as a sidecar in the LCore pod. The OpenStack MCP tools
@@ -299,6 +332,36 @@ func extractOSCPFields(
 		configMap:          configMap,
 		caBundleSecretName: caBundleSecretName,
 	}, nil
+}
+
+// ---------------------------------------------------------------------------
+// Deletion
+// ---------------------------------------------------------------------------
+
+// cleanupMCPResources removes MCP server resources when the rhoso_mcps feature
+// flag is disabled.
+func (r *OpenStackLightspeedReconciler) cleanupMCPResources(
+	ctx context.Context,
+	helper *common_helper.Helper,
+	instance *apiv1beta1.OpenStackLightspeed,
+) error {
+	ns := instance.Namespace
+
+	resources := []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: MCPConfigYAMLConfigMapName, Namespace: ns}},
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: CloudsYAMLConfigMapName, Namespace: ns}},
+		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: SecureYAMLSecretName, Namespace: ns}},
+		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: CombinedCABundleSecretName, Namespace: ns}},
+	}
+
+	for _, obj := range resources {
+		if err := helper.GetClient().Delete(ctx, obj); err != nil && !k8s_errors.IsNotFound(err) {
+			return fmt.Errorf("failed to delete %s %s: %w", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName(), err)
+		}
+	}
+
+	helper.GetLogger().Info("RHOSO MCP resources cleaned up")
+	return nil
 }
 
 // copyObjectsToOpenStackLightspeedNamespace copies the required ConfigMaps and Secrets

@@ -314,21 +314,6 @@ spec:
               mountPath: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
               subPath: tls-ca-bundle.pem
               readOnly: true
-        - name: rhoso-mcps
-          volumeMounts:
-            - name: openstack-config-secret
-              mountPath: /app/secure.yaml
-              subPath: secure.yaml
-            - name: openstack-config
-              mountPath: /app/clouds.yaml
-              subPath: clouds.yaml
-            - name: combined-ca-bundle
-              mountPath: /app/tls-ca-bundle.pem
-              subPath: tls-ca-bundle.pem
-              readOnly: true
-            - name: mcp-config
-              mountPath: /app/config.yaml
-              subPath: config.yaml
       volumes:
         - name: ogx-config
           configMap:
@@ -354,33 +339,6 @@ spec:
         - name: tls-certs
           secret:
             secretName: lightspeed-tls
-        - name: openstack-config-secret
-          secret:
-            secretName: openstack-config-secret
-            items:
-              - key: secure.yaml
-                path: secure.yaml
-            optional: true
-        - name: openstack-config
-          configMap:
-            name: openstack-config
-            items:
-              - key: clouds.yaml
-                path: clouds.yaml
-            optional: true
-        - name: combined-ca-bundle
-          secret:
-            secretName: combined-ca-bundle
-            items:
-              - key: tls-ca-bundle.pem
-                path: tls-ca-bundle.pem
-            optional: true
-        - name: mcp-config
-          configMap:
-            name: mcp-config
-            items:
-              - key: config.yaml
-                path: config.yaml
 status:
   replicas: 1
   readyReplicas: 1
@@ -398,14 +356,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: vector-db-scripts
-  namespace: openstack-lightspeed
-
-# MCP server resources
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mcp-config
   namespace: openstack-lightspeed
 
 # Console Plugin resources
@@ -505,6 +455,7 @@ status:
       message: Setup complete
     - type: OpenStackLightspeedMCPServerReady
       status: "True"
+      message: "RHOSO MCP server is disabled (rhoso_mcps feature flag not set)"
     - type: OpenStackLightspeedReady
       status: "True"
       reason: Ready
