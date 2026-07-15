@@ -248,13 +248,22 @@ func reconcilePostgresPVC(h *common_helper.Helper, ctx context.Context, instance
 	}
 
 	if err == nil {
-		// PVC already exists, validate if the size matches
 		existingQty := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-		if requestedQty.Cmp(existingQty) != 0 {
-			return fmt.Errorf("%w: requested size %s but existing PVC has %s",
-				ErrPostgresPVCSizeMismatch, requestedQty.String(), existingQty.String())
+		cmp := requestedQty.Cmp(existingQty)
+		if cmp < 0 {
+			return fmt.Errorf("%w: current %s, requested %s",
+				ErrPostgresPVCSizeShrink, existingQty.String(), requestedQty.String())
 		}
-		h.GetLogger().Info("Reusing the existing PostgreSQL PVC with a matching size", "name", pvc.Name)
+		if cmp == 0 {
+			h.GetLogger().Info("Reusing the existing PostgreSQL PVC with a matching size", "name", pvc.Name)
+			return nil
+		}
+		patch := client.MergeFrom(pvc.DeepCopy())
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = requestedQty
+		if err := h.GetClient().Patch(ctx, pvc, patch); err != nil {
+			return fmt.Errorf("%w: %w", ErrPatchPostgresPVC, err)
+		}
+		h.GetLogger().Info("Postgres PVC storage request expanded", "name", pvc.Name, "from", existingQty.String(), "to", requestedQty.String())
 		return nil
 	}
 
