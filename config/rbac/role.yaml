@@ -62,7 +62,6 @@ rules:
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - core.openstack.org
@@ -95,12 +94,9 @@ rules:
   resources:
   - openstacklightspeeds
   verbs:
-  - create
-  - delete
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - lightspeed.openstack.org
@@ -113,9 +109,7 @@ rules:
   resources:
   - openstacklightspeeds/status
   verbs:
-  - get
   - patch
-  - update
 - apiGroups:
   - operator.openshift.io
   resources:
@@ -126,26 +120,16 @@ rules:
   - update
   - watch
 - apiGroups:
-  - operators.coreos.com
-  resources:
-  - clusterserviceversions
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings
   - clusterroles
   verbs:
   - create
-  - delete
   - deletecollection
   - get
   - list
   - patch
-  - update
   - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -158,25 +142,24 @@ rules:
   - ""
   resources:
   - configmaps
-  - services
   verbs:
   - create
   - delete
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - ""
   resources:
   - persistentvolumeclaims
+  - serviceaccounts
+  - services
   verbs:
   - create
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - ""
@@ -189,17 +172,6 @@ rules:
   - get
   - list
   - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts
-  verbs:
-  - create
-  - get
-  - list
-  - patch
   - watch
 - apiGroups:
   - apps
@@ -207,11 +179,9 @@ rules:
   - deployments
   verbs:
   - create
-  - delete
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - networking.k8s.io
@@ -222,13 +192,4 @@ rules:
   - get
   - list
   - patch
-  - update
   - watch
-- apiGroups:
-  - operators.coreos.com
-  resources:
-  - clusterserviceversions
-  verbs:
-  - delete
-  - patch
-  - update
