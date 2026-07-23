@@ -121,6 +121,10 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 fmt: ## Run go fmt against code.
 	go fmt ./...
 
+.PHONY: tidy
+tidy: ## Run go mod tidy on every mod file in the repo
+	go mod tidy
+
 .PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
