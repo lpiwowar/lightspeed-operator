@@ -8,28 +8,7 @@ commands:
   - script: |
       #!/bin/bash
       set -euo pipefail
-      READY=$(oc get openstacklightspeed openstack-lightspeed \
-        -n openstack-lightspeed \
-        -o jsonpath='{.status.openStackReady}' 2>/dev/null || true)
-      if [ "$READY" = "true" ]; then
-        echo "ERROR: openStackReady is still true"
-        exit 1
-      fi
-
-      MCP_DATA=$(oc get configmap mcp-config -n openstack-lightspeed \
-        -o jsonpath='{.data.config\.yaml}')
-      ENABLED=$(echo "$MCP_DATA" | grep -A1 "openstack:" | grep "enabled:" | tr -d ' ')
-      if [ "$ENABLED" != "enabled:false" ]; then
-        echo "ERROR: MCP config does not have openstack disabled"
-        echo "$MCP_DATA"
-        exit 1
-      fi
-
-      CONDITION=$(oc get openstacklightspeed openstack-lightspeed \
-        -n openstack-lightspeed \
-        -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-      if [ "$CONDITION" != "True" ]; then
-        echo "ERROR: Operator is not Ready after CRD removal"
-        oc get openstacklightspeed openstack-lightspeed -n openstack-lightspeed -o yaml
-        exit 1
-      fi
+      source ../../common/shared_funcs.sh
+      assert_openstack_ready false
+      assert_mcp_openstack_enabled false
+      assert_condition_status Ready True

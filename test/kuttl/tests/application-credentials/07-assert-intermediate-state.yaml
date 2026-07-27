@@ -10,20 +10,6 @@ commands:
   - script: |
       #!/bin/bash
       set -euo pipefail
-
-      # openStackReady is omitempty, so absent means false
-      READY=$(oc get openstacklightspeed openstack-lightspeed -n openstack-lightspeed \
-        -o jsonpath='{.status.openStackReady}' 2>/dev/null || true)
-      if [ "$READY" = "true" ]; then
-        echo "ERROR: openStackReady should not be true in intermediate state"
-        exit 1
-      fi
-
-      MCP_CFG=$(oc get configmap mcp-config -n openstack-lightspeed \
-        -o jsonpath='{.data.config\.yaml}')
-      ENABLED=$(echo "$MCP_CFG" | grep -A1 "openstack:" | grep "enabled:" | tr -d ' ')
-      if [ "$ENABLED" != "enabled:false" ]; then
-        echo "ERROR: MCP config should have openstack disabled in intermediate state"
-        echo "$MCP_CFG"
-        exit 1
-      fi
+      source ../../common/shared_funcs.sh
+      assert_openstack_ready false
+      assert_mcp_openstack_enabled false
