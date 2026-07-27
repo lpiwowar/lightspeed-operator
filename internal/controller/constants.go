@@ -118,6 +118,12 @@ const (
 	LightspeedStackStartupProbeFailureThreshold = int32(30)
 	LightspeedStackProbeFailureThreshold        = int32(3)
 
+	// Health probe settings for the rhoso-mcps container.
+	MCPServerHealthPath            = "/health"
+	MCPServerProbePeriodSeconds    = int32(10)
+	MCPServerProbeTimeoutSeconds   = int32(5)
+	MCPServerProbeFailureThreshold = int32(3)
+
 	// Data Exporter
 	ExporterConfigVolumeName       = "exporter-config"
 	ExporterConfigMountPath        = "/etc/config"

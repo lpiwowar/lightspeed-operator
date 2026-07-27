@@ -232,6 +232,17 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 					corev1.ResourceMemory: resource.MustParse("200Mi"),
 				},
 			},
+			LivenessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: MCPServerHealthPath,
+						Port: intstr.FromInt32(MCPServerPort),
+					},
+				},
+				PeriodSeconds:    MCPServerProbePeriodSeconds,
+				TimeoutSeconds:   MCPServerProbeTimeoutSeconds,
+				FailureThreshold: MCPServerProbeFailureThreshold,
+			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
 		}
 		containers = append(containers, mcpContainer)

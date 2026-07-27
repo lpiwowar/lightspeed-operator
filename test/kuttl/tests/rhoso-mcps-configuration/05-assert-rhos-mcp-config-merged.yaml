@@ -37,7 +37,7 @@ commands:
 
       # Template defaults should be preserved
       assert_yaml_field "port" "8080"
-      assert_yaml_field "ip" "127.0.0.1"
+      assert_yaml_field "ip" "0.0.0.0"
       assert_yaml_field "openstack.ca_cert" "./tls-ca-bundle.pem"
       assert_yaml_field "openstack.insecure" "False"
       assert_yaml_field "openshift.insecure" "False"
