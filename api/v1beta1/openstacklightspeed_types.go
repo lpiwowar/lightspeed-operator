@@ -57,13 +57,15 @@ const (
 // May change at any time without backward compatibility.
 //
 // Supported fields:
-//   - featureFlags: list of experimental feature flags to enable
+//   - featureFlags: list of experimental feature flags to enable. Configuration options for experimental features must also live within the `DevSpec`.
 //   - okpChunkFilterQuery: Solr filter query for OKP searches (default: version-aware query combining detected OpenStack and OCP versions)
 //   - okpRagOnly: when true, only OKP is used as a RAG source (default: true)
+//   - rhosMCPConfig: custom YAML configuration for the rhos-mcps service; deep-merged on top of the operator defaults, openstack.enabled and openshift.enabled are always overridden by the operator
 type DevSpec struct {
 	FeatureFlags        []string `json:"featureFlags,omitempty"`
 	OKPChunkFilterQuery string   `json:"okpChunkFilterQuery,omitempty"`
 	OKPRagOnly          *bool    `json:"okpRagOnly,omitempty"`
+	RhosMCPConfig       string   `json:"rhosMCPConfig,omitempty"`
 }
 
 // OKPSpec defines configuration for the Offline Knowledge Portal (OKP).

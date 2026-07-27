@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"sigs.k8s.io/yaml"
 )
 
 func TestBuildMCPServerConfigData_OpenStackNotReady(t *testing.T) {
-	result, err := buildMCPServerConfigData(false)
+	result, err := buildMCPServerConfigData(false, "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -36,7 +38,7 @@ func TestBuildMCPServerConfigData_OpenStackNotReady(t *testing.T) {
 }
 
 func TestBuildMCPServerConfigData_OpenStackReady(t *testing.T) {
-	result, err := buildMCPServerConfigData(true)
+	result, err := buildMCPServerConfigData(true, "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -45,6 +47,101 @@ func TestBuildMCPServerConfigData_OpenStackReady(t *testing.T) {
 	}
 	if strings.Contains(result, "enabled: false") {
 		t.Error("unexpected 'enabled: false' in config when OpenStack is ready")
+	}
+}
+
+func TestBuildMCPServerConfigData_CustomConfig_OverridesEnabled(t *testing.T) {
+	customConfig := `
+openstack:
+  enabled: true
+  allow_write: true
+openshift:
+  enabled: false
+`
+	result, err := buildMCPServerConfigData(false, customConfig)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var parsed map[string]interface{}
+	if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
+		t.Fatalf("failed to parse result: %v", err)
+	}
+
+	osSection := parsed["openstack"].(map[string]interface{})
+	if osSection["enabled"] != false {
+		t.Errorf("expected openstack.enabled=false (operator override), got %v", osSection["enabled"])
+	}
+	if osSection["allow_write"] != true {
+		t.Errorf("expected openstack.allow_write=true (user value), got %v", osSection["allow_write"])
+	}
+
+	ocpSection := parsed["openshift"].(map[string]interface{})
+	if ocpSection["enabled"] != true {
+		t.Errorf("expected openshift.enabled=true (operator override), got %v", ocpSection["enabled"])
+	}
+}
+
+func TestBuildMCPServerConfigData_CustomConfig_DeepMergesWithDefaults(t *testing.T) {
+	customConfig := `
+debug: true
+workers: 4
+`
+	result, err := buildMCPServerConfigData(false, customConfig)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var parsed map[string]interface{}
+	if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
+		t.Fatalf("failed to parse result: %v", err)
+	}
+
+	if parsed["debug"] != true {
+		t.Errorf("expected debug=true (user override), got %v", parsed["debug"])
+	}
+	if parsed["workers"] != float64(4) {
+		t.Errorf("expected workers=4 (user override), got %v", parsed["workers"])
+	}
+	if parsed["port"] != float64(8080) {
+		t.Errorf("expected port=8080 (template default preserved), got %v", parsed["port"])
+	}
+
+	osSection := parsed["openstack"].(map[string]interface{})
+	if osSection["ca_cert"] != "./tls-ca-bundle.pem" {
+		t.Errorf("expected openstack.ca_cert preserved from template, got %v", osSection["ca_cert"])
+	}
+}
+
+func TestBuildMCPServerConfigData_CustomConfig_AddsNewFields(t *testing.T) {
+	customConfig := `
+custom_section:
+  key1: value1
+  key2: 42
+`
+	result, err := buildMCPServerConfigData(true, customConfig)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var parsed map[string]interface{}
+	if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
+		t.Fatalf("failed to parse result: %v", err)
+	}
+
+	custom := parsed["custom_section"].(map[string]interface{})
+	if custom["key1"] != "value1" {
+		t.Errorf("expected custom_section.key1=value1, got %v", custom["key1"])
+	}
+	if custom["key2"] != float64(42) {
+		t.Errorf("expected custom_section.key2=42, got %v", custom["key2"])
+	}
+}
+
+func TestBuildMCPServerConfigData_CustomConfig_InvalidYAML(t *testing.T) {
+	_, err := buildMCPServerConfigData(false, "not: valid: yaml: [")
+	if err == nil {
+		t.Error("expected error for invalid YAML")
 	}
 }
 

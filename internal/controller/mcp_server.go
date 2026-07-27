@@ -76,9 +76,29 @@ type mcpServerConfigParams struct {
 	OpenShiftEnabled bool
 }
 
-// buildMCPServerConfigData renders the MCP server config template with the
-// enabled flags for each platform section.
-func buildMCPServerConfigData(openStackReady bool) (string, error) {
+// deepMerge recursively merges override into base. When both sides have a map
+// for the same key the maps are merged; otherwise the override value wins.
+func deepMerge(base, override map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{}, len(base))
+	for k, v := range base {
+		result[k] = v
+	}
+	for k, v := range override {
+		if baseMap, ok := result[k].(map[string]interface{}); ok {
+			if overrideMap, ok := v.(map[string]interface{}); ok {
+				result[k] = deepMerge(baseMap, overrideMap)
+				continue
+			}
+		}
+		result[k] = v
+	}
+	return result
+}
+
+// buildMCPServerConfigData renders the MCP server config template and, when
+// rhosMCPConfig is provided, deep-merges the user config on top. The
+// openstack.enabled and openshift.enabled flags are always enforced.
+func buildMCPServerConfigData(openStackReady bool, rhosMCPConfig string) (string, error) {
 	var buf bytes.Buffer
 	err := mcpServerConfigTmpl.Execute(&buf, mcpServerConfigParams{
 		OpenStackEnabled: openStackReady,
@@ -88,7 +108,41 @@ func buildMCPServerConfigData(openStackReady bool) (string, error) {
 		return "", fmt.Errorf("failed to render MCP server config template: %w", err)
 	}
 
-	return buf.String(), nil
+	if rhosMCPConfig == "" {
+		return buf.String(), nil
+	}
+
+	var baseConfig map[string]interface{}
+	if err := yaml.Unmarshal(buf.Bytes(), &baseConfig); err != nil {
+		return "", fmt.Errorf("failed to parse base MCP server config: %w", err)
+	}
+
+	var userConfig map[string]interface{}
+	if err := yaml.Unmarshal([]byte(rhosMCPConfig), &userConfig); err != nil {
+		return "", fmt.Errorf("failed to parse rhosMCPConfig: %w", err)
+	}
+
+	merged := deepMerge(baseConfig, userConfig)
+
+	osSection, ok := merged["openstack"].(map[string]interface{})
+	if !ok {
+		osSection = make(map[string]interface{})
+		merged["openstack"] = osSection
+	}
+	osSection["enabled"] = openStackReady
+
+	ocpSection, ok := merged["openshift"].(map[string]interface{})
+	if !ok {
+		ocpSection = make(map[string]interface{})
+		merged["openshift"] = ocpSection
+	}
+	ocpSection["enabled"] = true
+
+	result, err := yaml.Marshal(merged)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal merged MCP server config: %w", err)
+	}
+	return string(result), nil
 }
 
 // BuildMCPServerConfigMap creates the ConfigMap for the MCP server configuration.
@@ -96,7 +150,8 @@ func BuildMCPServerConfigMap(
 	instance *apiv1beta1.OpenStackLightspeed,
 	openStackReady bool,
 ) (corev1.ConfigMap, error) {
-	configData, err := buildMCPServerConfigData(openStackReady)
+	devConfig, _ := parseDevConfig(instance)
+	configData, err := buildMCPServerConfigData(openStackReady, devConfig.RhosMCPConfig)
 	if err != nil {
 		return corev1.ConfigMap{}, err
 	}
