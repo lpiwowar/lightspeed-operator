@@ -67,6 +67,7 @@ var (
 	ErrGetPostgresConfigMap          = errors.New("failed to get Postgres configmap")
 	ErrCreatePostgresNetworkPolicy   = errors.New("failed to create Postgres network policy")
 	ErrCreatePostgresPVC             = errors.New("failed to create Postgres PVC")
+	ErrPatchPostgresPVC              = errors.New("failed to patch Postgres PVC")
 	ErrGetPostgresPVC                = errors.New("failed to get Postgres PVC")
-	ErrPostgresPVCSizeMismatch       = errors.New("existing Postgres PVC size does not match requested size")
+	ErrPostgresPVCSizeShrink         = errors.New("cannot shrink existing Postgres PVC")
 )
