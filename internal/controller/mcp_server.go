@@ -187,12 +187,12 @@ func (r *OpenStackLightspeedReconciler) ReconcileMCPServerTask(h *common_helper.
 	if rhosoMCPEnabled {
 		openStackReady, mcpErr := r.ReconcileMCPServer(ctx, h, instance)
 		if mcpErr != nil {
+			h.GetLogger().Error(mcpErr, "reconcile MCP server failed")
 			instance.Status.Conditions.Set(condition.FalseCondition(
 				apiv1beta1.OpenStackLightspeedMCPServerReadyCondition,
 				condition.ErrorReason,
 				condition.SeverityWarning,
 				apiv1beta1.DeploymentCheckFailedMessage,
-				mcpErr.Error(),
 			))
 			return mcpErr
 		}

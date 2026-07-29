@@ -69,7 +69,7 @@ const (
 	OpenStackLightspeedMCPServerDisabledMessage = "RHOSO MCP server is disabled (rhoso_mcps feature flag not set)"
 
 	// DeploymentCheckFailedMessage
-	DeploymentCheckFailedMessage = "Failed to check deployment status: %s"
+	DeploymentCheckFailedMessage = "Failed to check deployment status; see operator logs for details"
 
 	// DeploymentsNotReadyMessage
 	DeploymentsNotReadyMessage = "Waiting for deployments to be ready: %s"
