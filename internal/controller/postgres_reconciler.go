@@ -17,8 +17,10 @@ limitations under the License.
 package controller
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"text/template"
 
 	common_helper "github.com/openstack-k8s-operators/lib-common/modules/common/helper"
 	apiv1beta1 "github.com/openstack-k8s-operators/lightspeed-operator/api/v1beta1"
@@ -33,6 +35,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
+
+var postgresConfigTmpl = template.Must(
+	template.New("postgres.conf").Parse(postgresConfigTemplate),
+)
+
+func buildPostgresConfig(instance *apiv1beta1.OpenStackLightspeed) (string, error) {
+	var buf bytes.Buffer
+	err := postgresConfigTmpl.Execute(&buf, struct {
+		PostgresLogLevel string
+	}{
+		PostgresLogLevel: instance.Spec.Logging.PostgresLogLevel,
+	})
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
 
 // ReconcilePostgresResources reconciles Postgres prerequisite resources (Phase 1):
 // ConfigMap, Bootstrap Secret, Password Secret, and Network Policy.
@@ -60,7 +79,7 @@ func ReconcilePostgresDeployment(h *common_helper.Helper, ctx context.Context, i
 	return ReconcileTasksFailFast(h, ctx, instance, tasks)
 }
 
-func reconcilePostgresConfigMap(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresConfigMap(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      PostgresConfigMapName,
@@ -69,9 +88,12 @@ func reconcilePostgresConfigMap(h *common_helper.Helper, ctx context.Context, _ 
 	}
 
 	result, err := controllerutil.CreateOrPatch(ctx, h.GetClient(), cm, func() error {
-		// Set static postgres configuration
+		configContent, err := buildPostgresConfig(instance)
+		if err != nil {
+			return fmt.Errorf("failed to render postgres config: %w", err)
+		}
 		cm.Data = map[string]string{
-			PostgresConfigKey: PostgresConfigMapContent,
+			PostgresConfigKey: configContent,
 		}
 		// Set owner reference
 		return controllerutil.SetControllerReference(h.GetBeforeObject(), cm, h.GetScheme())

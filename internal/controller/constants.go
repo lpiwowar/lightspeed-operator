@@ -58,10 +58,10 @@ const (
 	PostgresUsernameSecretKey                    = "username"
 	PostgresBootstrapScript                      = "postgres_bootstrap.sh"
 	PostgresBootstrapSQLScript                   = "postgres_bootstrap.sql"
-	PostgresConfigKey                            = "postgresql.conf.sample"
+	PostgresConfigKey                            = "lightspeed.conf"
 	PostgresBootstrapVolumeMountPath             = "/usr/share/container-scripts/postgresql/start/postgres_bootstrap.sh"
 	PostgresBootstrapSQLVolumeMountPath          = "/usr/share/container-scripts/postgresql/start/postgres_bootstrap.sql"
-	PostgresConfigVolumeMountPath                = "/usr/share/pgsql/postgresql.conf.sample"
+	PostgresConfigVolumeMountPath                = "/opt/app-root/src/postgresql-cfg"
 	PostgresDataVolume                           = "postgres-data"
 	PostgresDataVolumeMountPath                  = "/var/lib/pgsql"
 	PostgresDataPVCName                          = "openstack-lightspeed-database"
@@ -364,10 +364,10 @@ var PostgresBootStrapScriptContent string
 //go:embed assets/postgres_bootstrap.sql
 var PostgresBootStrapSQLContent string
 
-// PostgreSQL Configuration - SSL and TLS settings
+// PostgreSQL Configuration template - rendered by buildPostgresConfig
 //
-//go:embed assets/postgres.conf
-var PostgresConfigMapContent string
+//go:embed assets/postgres.conf.tmpl
+var postgresConfigTemplate string
 
 // vectorDatabaseCollectScript embeds the contents of the vector_database_collect.sh script
 // found in the assets directory. This script is used during the initialization of the

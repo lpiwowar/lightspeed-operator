@@ -144,6 +144,15 @@ spec:
                       using format "component=level,component=level" (e.g., "core=debug,providers=info").
                     pattern: ^\w+(?:=\w+)?(?:,\w+(?:=\w+)?)*$
                     type: string
+                  postgresLogLevel:
+                    default: INFO
+                    description: Log level for the PostgreSQL container. When set
+                      to DEBUG, enables logging of all SQL statements (log_statement
+                      = all).
+                    enum:
+                    - DEBUG
+                    - INFO
+                    type: string
                 type: object
               maxTokensForResponse:
                 description: MaxTokensForResponse defines the maximum number of tokens

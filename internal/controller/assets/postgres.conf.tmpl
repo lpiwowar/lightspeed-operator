@@ -7,5 +7,10 @@ ssl_key_file = '/etc/certs/tls.key'
 # (sslcert/sslkey) to PostgreSQL, so ssl_ca_file has no effect (even when pg_hba.conf
 # is correctly configured for mTLS)
 # ssl_ca_file = '<none>'
+logging_collector = off
 log_connections = on
 log_disconnections = on
+log_lock_waits = on
+{{- if eq .PostgresLogLevel "DEBUG" }}
+log_statement = all
+{{- end }}
