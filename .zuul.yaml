@@ -1,6 +1,6 @@
 ---
 - project:
-    name: openstack-lightspeed/operator
+    name: openstack-k8s-operators/lightspeed-operator
     default-branch: main
     github-check:
       jobs:
