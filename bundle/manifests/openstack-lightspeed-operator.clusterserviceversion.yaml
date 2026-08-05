@@ -25,7 +25,7 @@ metadata:
       ]
     capabilities: Basic Install
     categories: AI/Machine Learning
-    createdAt: "2026-07-13T09:32:13Z"
+    createdAt: "2026-08-05T08:38:23Z"
     description: AI-powered virtual assistant for Red Hat OpenStack Services on OpenShift
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"
@@ -294,7 +294,7 @@ spec:
                 - name: RELATED_IMAGE_OPENSTACK_LIGHTSPEED_IMAGE_URL_DEFAULT
                   value: quay.io/openstack-lightspeed/rag-content:os-docs-2026.1-ogx
                 - name: RELATED_IMAGE_LCORE_IMAGE_URL_DEFAULT
-                  value: quay.io/lightspeed-core/lightspeed-stack:dev-latest
+                  value: quay.io/lightspeed-core/lightspeed-stack:latest
                 - name: RELATED_IMAGE_EXPORTER_IMAGE_URL_DEFAULT
                   value: quay.io/lightspeed-core/lightspeed-to-dataverse-exporter:latest
                 - name: RELATED_IMAGE_POSTGRES_IMAGE_URL_DEFAULT
@@ -488,7 +488,7 @@ spec:
   relatedImages:
   - image: quay.io/openstack-lightspeed/rag-content:os-docs-2026.1-ogx
     name: openstack-lightspeed-image-url-default
-  - image: quay.io/lightspeed-core/lightspeed-stack:dev-latest
+  - image: quay.io/lightspeed-core/lightspeed-stack:latest
     name: lcore-image-url-default
   - image: quay.io/lightspeed-core/lightspeed-to-dataverse-exporter:latest
     name: exporter-image-url-default
