@@ -118,6 +118,12 @@ const (
 	LightspeedStackStartupProbeFailureThreshold = int32(30)
 	LightspeedStackProbeFailureThreshold        = int32(3)
 
+	// Health probe settings for the rhoso-mcps container.
+	MCPServerHealthPath            = "/health"
+	MCPServerProbePeriodSeconds    = int32(10)
+	MCPServerProbeTimeoutSeconds   = int32(5)
+	MCPServerProbeFailureThreshold = int32(3)
+
 	// Data Exporter
 	ExporterConfigVolumeName       = "exporter-config"
 	ExporterConfigMountPath        = "/etc/config"
@@ -160,6 +166,24 @@ const (
 	AzureOpenAIProviderName = "azure_openai"
 	OpenAIProviderName      = "openai"
 	WatsonXProviderName     = "watsonx"
+
+	// OpenStack Control Plane
+	OpenStackControlPlaneGroup   = "core.openstack.org"
+	OpenStackControlPlaneVersion = "v1beta1"
+	OpenStackControlPlaneKind    = "OpenStackControlPlane"
+
+	// Keystone Application Credential
+	KeystoneApplicationCredentialGroup   = "keystone.openstack.org"
+	KeystoneApplicationCredentialVersion = "v1beta1"
+	KeystoneApplicationCredentialKind    = "KeystoneApplicationCredential"
+
+	// Lightspeed Service User in OpenStack created by the Keystone Application Credential
+	LightspeedServiceUserName    = "lightspeed"
+	LightspeedServiceUserDomain  = "default"
+	LightspeedPasswordSecretName = "lightspeed-password"
+	LightspeedPasswordSecretKey  = "password"
+	LightspeedACCRName           = "lightspeed"
+	LightspeedACFinalizerName    = "openstack.org/lightspeed-ac-consumer"
 
 	// EnvVarSuffixAPIKey is the environment variable suffix for API key credentials
 	EnvVarSuffixAPIKey = "_API_KEY"
@@ -249,6 +273,10 @@ const (
 	LlamaStackConfigMapResourceVersionAnnotation = "ols.openshift.io/llamastack-configmap-version"
 	LCoreConfigMapResourceVersionAnnotation      = "ols.openshift.io/lcore-configmap-version"
 	CABundleConfigMapVersionAnnotation           = "ols.openshift.io/ca-bundle-configmap-version"
+	MCPConfigMapResourceVersionAnnotation        = "ols.openshift.io/mcp-configmap-version"
+	CloudsYAMLConfigMapVersionAnnotation         = "ols.openshift.io/clouds-yaml-configmap-version"
+	SecureYAMLSecretVersionAnnotation            = "ols.openshift.io/secure-yaml-secret-version"        // #nosec G101 -- annotation key, not a credential
+	CombinedCABundleSecretVersionAnnotation      = "ols.openshift.io/combined-ca-bundle-secret-version" // #nosec G101 -- annotation key, not a credential
 
 	// Volume Permissions
 	// These constants define file permissions for volumes mounted in containers.
@@ -321,6 +349,9 @@ const (
 	// that signs TLS certificates auto-provisioned for Services via the
 	// service.beta.openshift.io/serving-cert-secret-name annotation.
 	OpenShiftServiceCAConfigMap = "openshift-service-ca.crt"
+
+	// OpenStackLightspeedChecksumAnnotation is the annotation key used to store the checksum of resources.
+	OpenStackLightspeedChecksumAnnotation = "openstack.org/checksum"
 )
 
 // PostgreSQL Bootstrap Script - creates database, extensions, and schemas

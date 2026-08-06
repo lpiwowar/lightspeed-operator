@@ -46,6 +46,9 @@ const (
 	// OKPContainerImage is the fall-back container image for OKP (Offline Knowledge Portal)
 	OKPContainerImage = "registry.redhat.io/offline-knowledge-portal/rhokp-rhel9:latest"
 
+	// MCPServerContainerImage is the fall-back container image for the MCP server
+	MCPServerContainerImage = "quay.io/openstack-lightspeed/lightspeed-mcps:latest"
+
 	// MaxTokensForResponseDefault is the default maximum number of tokens that should be used for response
 	MaxTokensForResponseDefault = 2048
 )
@@ -54,13 +57,15 @@ const (
 // May change at any time without backward compatibility.
 //
 // Supported fields:
-//   - featureFlags: list of experimental feature flags to enable
+//   - featureFlags: list of experimental feature flags to enable. Configuration options for experimental features must also live within the `DevSpec`.
 //   - okpChunkFilterQuery: Solr filter query for OKP searches (default: version-aware query combining detected OpenStack and OCP versions)
 //   - okpRagOnly: when true, only OKP is used as a RAG source (default: true)
+//   - rhosMCPConfig: custom YAML configuration for the rhos-mcps service; deep-merged on top of the operator defaults, openstack.enabled and openshift.enabled are always overridden by the operator
 type DevSpec struct {
 	FeatureFlags        []string `json:"featureFlags,omitempty"`
 	OKPChunkFilterQuery string   `json:"okpChunkFilterQuery,omitempty"`
 	OKPRagOnly          *bool    `json:"okpRagOnly,omitempty"`
+	RhosMCPConfig       string   `json:"rhosMCPConfig,omitempty"`
 }
 
 // OKPSpec defines configuration for the Offline Knowledge Portal (OKP).
@@ -205,6 +210,16 @@ type OpenStackLightspeedStatus struct {
 
 	// ObservedGeneration - the most recent generation observed for this object.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// +optional
+	// OpenStackReady indicates whether an OpenStackControlPlane was detected and
+	// is ready. When true, the OpenStack MCP tools are included in lightspeed-stack config.
+	OpenStackReady bool `json:"openStackReady,omitempty"`
+
+	// +optional
+	// ApplicationCredentialSecret is the name of the current AC secret in the
+	// OpenStack namespace. Tracked for rotation detection.
+	ApplicationCredentialSecret string `json:"applicationCredentialSecret,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -229,6 +244,7 @@ type OpenStackLightspeedStatus struct {
 // +operator-sdk:csv:customresourcedefinitions:resources={{PersistentVolumeClaim,v1,openstack-lightspeed-database}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{ClusterRole,v1,lightspeed-app-server-sar-role}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{ClusterRoleBinding,v1,lightspeed-app-server-sar-role-binding}}
+// +operator-sdk:csv:customresourcedefinitions:resources={{ConfigMap,v1,mcp-config}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{Subscription,v1alpha1}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{ClusterServiceVersion,v1alpha1}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{InstallPlan,v1alpha1}}
@@ -268,6 +284,7 @@ type OpenStackLightspeedDefaults struct {
 	ConsoleImageURL      string
 	ConsoleImagePF5URL   string
 	OKPImageURL          string
+	MCPServerImageURL    string
 	MaxTokensForResponse int
 }
 
@@ -291,6 +308,8 @@ func SetupDefaults() {
 			"RELATED_IMAGE_CONSOLE_PF5_IMAGE_URL_DEFAULT", ConsoleContainerImagePF5),
 		OKPImageURL: util.GetEnvVar(
 			"RELATED_IMAGE_OKP_IMAGE_URL_DEFAULT", OKPContainerImage),
+		MCPServerImageURL: util.GetEnvVar(
+			"RELATED_IMAGE_MCP_SERVER_IMAGE_URL_DEFAULT", MCPServerContainerImage),
 		MaxTokensForResponse: MaxTokensForResponseDefault,
 	}
 
