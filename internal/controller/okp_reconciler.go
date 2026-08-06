@@ -124,6 +124,7 @@ func buildOKPPodTemplateSpec(instance *apiv1beta1.OpenStackLightspeed) corev1.Po
 			Labels: generateOKPSelectorLabels(),
 		},
 		Spec: corev1.PodSpec{
+			AutomountServiceAccountToken: toPtr(false),
 			Containers: []corev1.Container{
 				{
 					Name:  OKPContainerName,
