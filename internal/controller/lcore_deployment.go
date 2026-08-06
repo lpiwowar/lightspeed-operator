@@ -205,15 +205,7 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 			Name:         "rhoso-mcps",
 			Image:        apiv1beta1.OpenStackLightspeedDefaultValues.MCPServerImageURL,
 			VolumeMounts: mcpMounts,
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("50m"),
-					corev1.ResourceMemory: resource.MustParse("64Mi"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceMemory: resource.MustParse("200Mi"),
-				},
-			},
+			Resources:    instance.Spec.Resources.MCP,
 			LivenessProbe: &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{

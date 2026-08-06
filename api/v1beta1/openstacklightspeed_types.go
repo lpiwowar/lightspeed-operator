@@ -129,6 +129,12 @@ type ContainerResourcesSpec struct {
 	// ConsolePlugin sets compute resources for the lightspeed-console-plugin
 	// container and its init container.
 	ConsolePlugin corev1.ResourceRequirements `json:"consolePlugin,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={requests: {cpu: "50m", memory: "64Mi"}, limits: {memory: "200Mi"}}
+	// MCP sets compute resources for the RHOSO MCP server sidecar container
+	// (only created when the rhoso_mcps feature flag is enabled).
+	MCP corev1.ResourceRequirements `json:"mcp,omitempty"`
 }
 
 // OpenStackLightspeedSpec defines the desired state of OpenStackLightspeed

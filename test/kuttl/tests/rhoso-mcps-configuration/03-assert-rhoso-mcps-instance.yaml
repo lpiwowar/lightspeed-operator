@@ -17,6 +17,12 @@ spec:
         - name: lightspeed-service-api
         - name: lightspeed-to-dataverse-exporter
         - name: rhoso-mcps
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 200Mi
           volumeMounts:
             - name: openstack-config-secret
               mountPath: /app/secure.yaml
