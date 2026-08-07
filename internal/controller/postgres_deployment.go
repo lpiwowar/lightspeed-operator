@@ -86,7 +86,6 @@ func buildPostgresPodTemplateSpec() corev1.PodTemplateSpec {
 	volumeMounts = append(volumeMounts, corev1.VolumeMount{
 		Name:      PostgresConfigMapName,
 		MountPath: PostgresConfigVolumeMountPath,
-		SubPath:   PostgresConfigKey,
 	})
 
 	volumes = append(volumes, corev1.Volume{

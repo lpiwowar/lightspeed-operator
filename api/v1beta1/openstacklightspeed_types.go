@@ -139,6 +139,13 @@ type LoggingConfig struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Dataverse Exporter Log Level"
 	// Log level for the dataverse exporter sidecar container. Supports standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
 	DataverseExporterLogLevel string `json:"dataverseExporterLogLevel,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=DEBUG;INFO
+	// +kubebuilder:default="INFO"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="PostgreSQL Log Level"
+	// Log level for the PostgreSQL container. When set to DEBUG, enables logging of all SQL statements (log_statement = all).
+	PostgresLogLevel string `json:"postgresLogLevel,omitempty"`
 }
 
 // OpenStackLightspeedCore defines the desired state of OpenStackLightspeed

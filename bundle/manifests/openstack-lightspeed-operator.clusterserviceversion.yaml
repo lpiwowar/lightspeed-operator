@@ -25,7 +25,7 @@ metadata:
       ]
     capabilities: Basic Install
     categories: AI/Machine Learning
-    createdAt: "2026-08-05T09:50:56Z"
+    createdAt: "2026-08-06T09:28:15Z"
     description: AI-powered virtual assistant for Red Hat OpenStack Services on OpenShift
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"
@@ -144,6 +144,10 @@ spec:
           (e.g., "core=debug,providers=info").
         displayName: OGX Log Level
         path: logging.ogxLogLevel
+      - description: Log level for the PostgreSQL container. When set to DEBUG, enables
+          logging of all SQL statements (log_statement = all).
+        displayName: PostgreSQL Log Level
+        path: logging.postgresLogLevel
       - description: Name of the model to use at the API endpoint provided in LLMEndpoint
         displayName: Model Name
         path: modelName
