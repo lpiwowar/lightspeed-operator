@@ -239,12 +239,12 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	if err := ReconcileTasks(helper, ctx, instance, reconcileTasks); err != nil {
+		Log.Error(err, "reconcile tasks failed")
 		instance.Status.Conditions.Set(condition.FalseCondition(
 			apiv1beta1.OpenStackLightspeedReadyCondition,
 			condition.ErrorReason,
 			condition.SeverityWarning,
 			apiv1beta1.DeploymentCheckFailedMessage,
-			err.Error(),
 		))
 		return ctrl.Result{}, err
 	}
@@ -289,6 +289,7 @@ func (r *OpenStackLightspeedReconciler) reconcileStatus(
 	helper *common_helper.Helper,
 	instance *apiv1beta1.OpenStackLightspeed,
 ) (ctrl.Result, error) {
+	Log := r.GetLogger(ctx)
 	deployments := []string{
 		PostgresDeploymentName,
 		LCoreDeploymentName,
@@ -297,12 +298,12 @@ func (r *OpenStackLightspeedReconciler) reconcileStatus(
 	for _, deploymentName := range deployments {
 		deployment, err := getDeployment(ctx, helper, deploymentName, instance.Namespace)
 		if err != nil {
+			Log.Error(err, "failed to get deployment", "deployment", deploymentName)
 			instance.Status.Conditions.Set(condition.FalseCondition(
 				apiv1beta1.OpenStackLightspeedReadyCondition,
 				condition.ErrorReason,
 				condition.SeverityWarning,
 				apiv1beta1.DeploymentCheckFailedMessage,
-				err.Error(),
 			))
 			return ctrl.Result{}, err
 		}
