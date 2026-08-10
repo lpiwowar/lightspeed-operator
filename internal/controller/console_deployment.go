@@ -69,7 +69,8 @@ func buildConsoleDeploymentSpec(consoleImage string) appsv1.DeploymentSpec {
 						Type: corev1.SeccompProfileTypeRuntimeDefault,
 					},
 				},
-				ServiceAccountName: ConsoleUIServiceAccountName,
+				AutomountServiceAccountToken: toPtr(false),
+				ServiceAccountName:           ConsoleUIServiceAccountName,
 				InitContainers: []corev1.Container{
 					{
 						Name:  "rewrite-locales",

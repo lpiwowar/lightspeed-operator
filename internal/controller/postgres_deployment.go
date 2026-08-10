@@ -155,6 +155,7 @@ func buildPostgresPodTemplateSpec() corev1.PodTemplateSpec {
 			Annotations: make(map[string]string),
 		},
 		Spec: corev1.PodSpec{
+			AutomountServiceAccountToken: toPtr(false),
 			Containers: []corev1.Container{
 				{
 					Name:            PostgresDeploymentName,
