@@ -1,0 +1,22 @@
+{
+  "extends": [
+    "github>openstack-k8s-operators/renovate-config:default.json5"
+  ],
+  "baseBranchPatterns": [
+    "main"
+  ],
+  "useBaseBranchConfig": "merge",
+  "postUpgradeTasks": {
+    "commands": [
+      "make tidy",
+      "make manifests generate"
+    ],
+    "fileFilters": [
+      "**/go.mod",
+      "**/go.sum",
+      "**/*.go",
+      "**/*.yaml"
+    ],
+    "executionMode": "update"
+  }
+}
