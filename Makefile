@@ -119,6 +119,12 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+.PHONY: gowork
+gowork: ## Generate go.work file
+	test -f go.work || go work init
+	go work use .
+	go work sync
+
 .PHONY: force-bump
 force-bump: ## Force bump after tagging
 	for dep in $$(cat go.mod | grep openstack-k8s-operators | grep -vE -- 'indirect|lightspeed-operator|^replace|^//' | awk '{print $$1}'); do \
