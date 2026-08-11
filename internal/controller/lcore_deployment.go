@@ -109,16 +109,7 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 			TimeoutSeconds:   LlamaStackProbeTimeoutSeconds,
 			FailureThreshold: LlamaStackProbeFailureThreshold,
 		},
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("500m"),
-				corev1.ResourceMemory: resource.MustParse("2Gi"),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("2"),
-				corev1.ResourceMemory: resource.MustParse("8Gi"),
-			},
-		},
+		Resources:       instance.Spec.Resources.LlamaStack,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	}
 
@@ -145,25 +136,16 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 	}
 
 	lightspeedStackContainer := corev1.Container{
-		Name:           "lightspeed-service-api",
-		Image:          apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
-		Args:           []string{"-c", VectorDBVolumeLightspeedStackConfigPath},
-		Ports:          []corev1.ContainerPort{{Name: "https", ContainerPort: OpenStackLightspeedAppServerContainerPort}},
-		VolumeMounts:   lightspeedStackMounts,
-		Env:            lsEnvVars,
-		StartupProbe:   buildLightspeedStackStartupProbe(),
-		LivenessProbe:  buildLightspeedStackLivenessProbe(),
-		ReadinessProbe: buildLightspeedStackReadinessProbe(),
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("250m"),
-				corev1.ResourceMemory: resource.MustParse("512Mi"),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("1"),
-				corev1.ResourceMemory: resource.MustParse("2Gi"),
-			},
-		},
+		Name:            "lightspeed-service-api",
+		Image:           apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
+		Args:            []string{"-c", VectorDBVolumeLightspeedStackConfigPath},
+		Ports:           []corev1.ContainerPort{{Name: "https", ContainerPort: OpenStackLightspeedAppServerContainerPort}},
+		VolumeMounts:    lightspeedStackMounts,
+		Env:             lsEnvVars,
+		StartupProbe:    buildLightspeedStackStartupProbe(),
+		LivenessProbe:   buildLightspeedStackLivenessProbe(),
+		ReadinessProbe:  buildLightspeedStackReadinessProbe(),
+		Resources:       instance.Spec.Resources.LightspeedService,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	}
 	containers := []corev1.Container{llamaStackContainer, lightspeedStackContainer}
@@ -223,15 +205,7 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 			Name:         "rhoso-mcps",
 			Image:        apiv1beta1.OpenStackLightspeedDefaultValues.MCPServerImageURL,
 			VolumeMounts: mcpMounts,
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("50m"),
-					corev1.ResourceMemory: resource.MustParse("64Mi"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceMemory: resource.MustParse("200Mi"),
-				},
-			},
+			Resources:    instance.Spec.Resources.MCP,
 			LivenessProbe: &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
@@ -254,7 +228,17 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 		return corev1.PodTemplateSpec{}, err
 	}
 
-	initContainers := buildInitContainers(instance)
+	initResources := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("100m"),
+			corev1.ResourceMemory: resource.MustParse("256Mi"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("1Gi"),
+		},
+	}
+	initContainers := buildInitContainers(instance, initResources)
 
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -276,23 +260,12 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 // and Lightspeed Stack configuration files, incorporating information from
 // the provided vector database images. For details on their logic, see:
 // (1) assets/vector_database_collect.sh and (2) assets/vector_database_build.py.
-func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed) []corev1.Container {
+func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed, initResources corev1.ResourceRequirements) []corev1.Container {
 	securityContext := &corev1.SecurityContext{
 		RunAsNonRoot:             &[]bool{true}[0],
 		AllowPrivilegeEscalation: &[]bool{false}[0],
 		Capabilities: &corev1.Capabilities{
 			Drop: []corev1.Capability{"ALL"},
-		},
-	}
-
-	resourceRequirements := corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("256Mi"),
-		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("1Gi"),
 		},
 	}
 
@@ -306,7 +279,7 @@ func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed) []corev1.Cont
 			"--enable-okp",
 		},
 		SecurityContext: securityContext,
-		Resources:       resourceRequirements,
+		Resources:       initResources,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      VectorDBVolumeName,
@@ -336,7 +309,7 @@ func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed) []corev1.Cont
 		Image:           apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
 		Command:         configBuildCmd,
 		SecurityContext: securityContext,
-		Resources:       resourceRequirements,
+		Resources:       initResources,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      VectorDBVolumeName,
