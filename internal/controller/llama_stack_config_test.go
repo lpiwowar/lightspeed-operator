@@ -73,12 +73,12 @@ func checkModelCommonConfig(modelConfig map[string]interface{}, instance *apiv1b
 	gomega.Expect(modelConfig).NotTo(gomega.HaveKey("metadata"))
 }
 
-var _ = ginkgo.Describe("Llama Stack config", func() {
-	ginkgo.Describe("buildLlamaStackInferenceProviders", func() {
+var _ = ginkgo.Describe("OGX config", func() {
+	ginkgo.Describe("buildOGXInferenceProviders", func() {
 		ginkgo.DescribeTable("should return correct inference providers config",
 			func(provider, providerType string, checkConfig func(map[string]interface{}, *apiv1beta1.OpenStackLightspeed)) {
 				instance := getOpenStackLightspeedProvidersInstance(provider)
-				inferenceProvidersConfig, err := buildLlamaStackInferenceProviders(context.Background(), nil, instance)
+				inferenceProvidersConfig, err := buildOGXInferenceProviders(context.Background(), nil, instance)
 
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(inferenceProvidersConfig).To(gomega.HaveLen(2))
@@ -129,11 +129,11 @@ var _ = ginkgo.Describe("Llama Stack config", func() {
 		)
 	})
 
-	ginkgo.Describe("buildLlamaStackModels", func() {
+	ginkgo.Describe("buildOGXModels", func() {
 		ginkgo.DescribeTable("should return correct models config",
 			func(provider string) {
 				instance := getOpenStackLightspeedProvidersInstance(provider)
-				modelsConfig := buildLlamaStackModels(nil, instance)
+				modelsConfig := buildOGXModels(nil, instance)
 
 				gomega.Expect(modelsConfig).To(gomega.HaveLen(2))
 

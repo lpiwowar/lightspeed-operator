@@ -140,9 +140,9 @@ spec:
                     type: string
                   ogxLogLevel:
                     default: all=info
-                    description: Log level configuration for the OGX/llama-stack container.
-                      Supports standard levels (INFO, DEBUG) or fine-grained control
-                      using format "component=level,component=level" (e.g., "core=debug,providers=info").
+                    description: Log level configuration for the OGX container. Supports
+                      standard levels (INFO, DEBUG) or fine-grained control using
+                      format "component=level,component=level" (e.g., "core=debug,providers=info").
                     pattern: ^\w+(?:=\w+)?(?:,\w+(?:=\w+)?)*$
                     type: string
                   postgresLogLevel:
@@ -404,17 +404,16 @@ spec:
                           More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                         type: object
                     type: object
-                  llamaStack:
+                  mcp:
                     default:
                       limits:
-                        cpu: "2"
-                        memory: 8Gi
+                        memory: 500Mi
                       requests:
-                        cpu: 500m
-                        memory: 2Gi
+                        cpu: 50m
+                        memory: 300Mi
                     description: |-
-                      LlamaStack sets compute resources for the llama-stack (OGX) container
-                      in the lightspeed-stack deployment.
+                      MCP sets compute resources for the RHOSO MCP server sidecar container
+                      (only created when the rhoso_mcps feature flag is enabled).
                     properties:
                       claims:
                         description: |-
@@ -472,16 +471,17 @@ spec:
                           More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                         type: object
                     type: object
-                  mcp:
+                  ogx:
                     default:
                       limits:
-                        memory: 500Mi
+                        cpu: "2"
+                        memory: 8Gi
                       requests:
-                        cpu: 50m
-                        memory: 300Mi
+                        cpu: 500m
+                        memory: 2Gi
                     description: |-
-                      MCP sets compute resources for the RHOSO MCP server sidecar container
-                      (only created when the rhoso_mcps feature flag is enabled).
+                      OGX sets compute resources for the OGX container
+                      in the lightspeed-stack deployment.
                     properties:
                       claims:
                         description: |-

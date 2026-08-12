@@ -52,11 +52,11 @@ var (
 	// ErrGetTLSSecret is returned when the TLS Secret cannot be retrieved.
 	ErrGetTLSSecret = errors.New("failed to get TLS secret")
 
-	// ErrCreateLlamaStackConfigMap is returned when the Llama Stack ConfigMap cannot be created.
-	ErrCreateLlamaStackConfigMap = errors.New("failed to create Llama Stack configmap")
+	// ErrCreateOGXConfigMap is returned when the OGX ConfigMap cannot be created.
+	ErrCreateOGXConfigMap = errors.New("failed to create OGX configmap")
 
-	// ErrGenerateLlamaStackConfigMap is returned when the Llama Stack ConfigMap cannot be generated.
-	ErrGenerateLlamaStackConfigMap = errors.New("failed to generate Llama Stack configmap")
+	// ErrGenerateOGXConfigMap is returned when the OGX ConfigMap cannot be generated.
+	ErrGenerateOGXConfigMap = errors.New("failed to generate OGX configmap")
 
 	// ErrCreateExporterConfigMap is returned when the exporter ConfigMap cannot be created.
 	ErrCreateExporterConfigMap = errors.New("failed to create exporter configmap")

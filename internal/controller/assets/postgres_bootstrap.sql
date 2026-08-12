@@ -17,13 +17,13 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE SCHEMA IF NOT EXISTS quota_handlers AUTHORIZATION :"postgresql_user";
 -------------------------------------------------------------------------------
 
--- 2) LLAMA STACK DATABASE CONFIGURATION --------------------------------------
--- Create postgresql_llama_stack_database.
-SELECT format('CREATE DATABASE %I', :'postgresql_llama_stack_database')
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'postgresql_llama_stack_database')\gexec
+-- 2) OGX DATABASE CONFIGURATION --------------------------------------
+-- Create postgresql_ogx_database.
+SELECT format('CREATE DATABASE %I', :'postgresql_ogx_database')
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'postgresql_ogx_database')\gexec
 
--- Connect and configure postgresql_llama_stack_database
-\c :postgresql_llama_stack_database
+-- Connect and configure postgresql_ogx_database
+\c :postgresql_ogx_database
 
 -- PostgreSQL 15+ removed the default CREATE/USAGE grants on the public schema.
 -- Therefore we have to explicitly grant the permissions to the user.

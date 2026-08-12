@@ -95,13 +95,13 @@ func buildLCoreServiceConfig(_ *common_helper.Helper, _ *apiv1beta1.OpenStackLig
 	}
 }
 
-func buildLCoreLlamaStackConfig() map[string]interface{} {
-	llamaStackConfig := map[string]interface{}{
+func buildLCoreOGXConfig() map[string]interface{} {
+	ogxConfig := map[string]interface{}{
 		"use_as_library_client": false,
-		"url":                   fmt.Sprintf("http://localhost:%d", LlamaStackContainerPort),
+		"url":                   fmt.Sprintf("http://localhost:%d", OGXContainerPort),
 	}
 
-	return llamaStackConfig
+	return ogxConfig
 }
 
 func buildLCoreUserDataCollectionConfig(_ *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) map[string]interface{} {
@@ -143,7 +143,7 @@ func buildLCoreDatabaseConfig(h *common_helper.Helper, _ *apiv1beta1.OpenStackLi
 			"gss_encmode":  "disable",
 			"ca_cert_path": CABundleMountPath,
 
-			// Environment variable substitution via llama_stack.core.stack.replace_env_vars
+			// Environment variable substitution via ogx.core.stack.replace_env_vars
 			"password": "${env.POSTGRESQL_PASSWORD}",
 
 			// Separate schema for LCore to avoid conflicts with App Server
@@ -333,7 +333,7 @@ func buildLCoreConfigYAML(ctx context.Context, h *common_helper.Helper, instance
 	config := map[string]interface{}{
 		"name":                 "Lightspeed Core Service (LCS)",
 		"service":              buildLCoreServiceConfig(h, instance),
-		"ogx":                  buildLCoreLlamaStackConfig(),
+		"ogx":                  buildLCoreOGXConfig(),
 		"user_data_collection": buildLCoreUserDataCollectionConfig(h, instance),
 		"authentication":       buildLCoreAuthenticationConfig(h, instance),
 		"inference":            buildLCoreInferenceConfig(h, instance),

@@ -44,7 +44,7 @@ func ReconcileLCoreResources(ctx context.Context, h *common_helper.Helper, insta
 		{Name: "ServiceAccount", Task: reconcileServiceAccount},
 		{Name: "SARRole", Task: reconcileSARRole},
 		{Name: "SARRoleBinding", Task: reconcileSARRoleBinding},
-		{Name: "LlamaStackConfigMap", Task: reconcileLlamaStackConfigMap},
+		{Name: "OGXConfigMap", Task: reconcileOGXConfigMap},
 		{Name: "LcoreConfigMap", Task: reconcileLcoreConfigMap},
 		{Name: "ExporterConfigMap", Task: reconcileExporterConfigMap},
 		{Name: "VectorDBScriptsConfigMap", Task: reconcileVectorDBScriptsConfigMap},
@@ -178,19 +178,19 @@ func reconcileSARRoleBinding(ctx context.Context, h *common_helper.Helper, _ *ap
 	return nil
 }
 
-// reconcileLlamaStackConfigMap ensures the Llama Stack config map exists and is up to date.
-func reconcileLlamaStackConfigMap(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
+// reconcileOGXConfigMap ensures the OGX config map exists and is up to date.
+func reconcileOGXConfigMap(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	// Build the YAML data
-	yamlData, err := buildLlamaStackYAML(ctx, h, instance)
+	yamlData, err := buildOGXYAML(ctx, h, instance)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrGenerateLlamaStackConfigMap, err)
+		return fmt.Errorf("%w: %w", ErrGenerateOGXConfigMap, err)
 	}
 
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      LlamaStackConfigCmName,
+			Name:      OGXConfigCmName,
 			Namespace: h.GetBeforeObject().GetNamespace(),
 		},
 	}
@@ -205,10 +205,10 @@ func reconcileLlamaStackConfigMap(ctx context.Context, h *common_helper.Helper, 
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrCreateLlamaStackConfigMap, err)
+		return fmt.Errorf("%w: %w", ErrCreateOGXConfigMap, err)
 	}
 
-	logger.Info("Llama Stack ConfigMap reconciled", "name", cm.Name, "result", result)
+	logger.Info("OGX ConfigMap reconciled", "name", cm.Name, "result", result)
 	return nil
 }
 

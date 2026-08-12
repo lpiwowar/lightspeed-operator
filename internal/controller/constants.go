@@ -62,7 +62,7 @@ const (
 	PostgresNetworkPolicyName                    = "lightspeed-postgres-server"
 	PostgresServicePort                          = int32(5432)
 	PostgresLightspeedStackDbName                = "lightspeed-stack"
-	PostgresLlamaStackDbName                     = "ogx"
+	PostgresOGXDbName                            = "ogx"
 	PostgresSharedBuffers                        = "256MB"
 	PostgresMaxConnections                       = 100
 	OpenStackLightspeedComponentPasswordFileName = "password"
@@ -81,8 +81,8 @@ const (
 	PostgresVarRunVolumeMountPath                = "/var/run/postgresql"
 
 	// PostgresSQLUsername is non-admin user that should be used by lightspeed-stack and
-	// llama-stack (OGX) to access the PostgreSQL database. This user gets created by the
-	// PostgreSQL container by setting the POSTGRESQL_USER and POSTGRESQL_PASSWORD environment
+	// (OGX) to access the PostgreSQL database. This user gets created by the PostgreSQL
+	// container by setting the POSTGRESQL_USER and POSTGRESQL_PASSWORD environment
 	// variable.
 	PostgresSQLUsername = "lightspeed-app-user"
 
@@ -112,8 +112,8 @@ const (
 
 	// -- LCore specific ---------------------------------------------------------
 
-	LlamaStackContainerPort  = int32(8321)
-	LlamaStackConfigCmName   = "llama-stack-config"
+	OGXContainerPort         = int32(8321)
+	OGXConfigCmName          = "ogx-config"
 	LCoreConfigCmName        = "lightspeed-stack-config"
 	LCoreDeploymentName      = "lightspeed-stack-deployment"
 	LCoreConfigMountPath     = "/app-root/lightspeed-stack.yaml"
@@ -122,16 +122,16 @@ const (
 
 	// ---------------------------------------------------------------------------
 
-	// -- Health probe settings for the llama-stack/OGX container. ---------------
+	// -- Health probe settings for the stack/OGX container. ---------------------
 
 	// The startup probe allows up to 30 failures (300s) for the slow initialization,
 	// while liveness and readiness probes use a tighter threshold of 3 failures.
 
-	LlamaStackHealthPath                   = "/v1/health"
-	LlamaStackProbePeriodSeconds           = int32(10)
-	LlamaStackProbeTimeoutSeconds          = int32(5)
-	LlamaStackStartupProbeFailureThreshold = int32(30)
-	LlamaStackProbeFailureThreshold        = int32(3)
+	OGXHealthPath                   = "/v1/health"
+	OGXProbePeriodSeconds           = int32(10)
+	OGXProbeTimeoutSeconds          = int32(5)
+	OGXStartupProbeFailureThreshold = int32(30)
+	OGXProbeFailureThreshold        = int32(3)
 
 	// ---------------------------------------------------------------------------
 
@@ -320,16 +320,16 @@ const (
 	// By recording the resource version of a ConfigMap in a Deployment, StatefulSet, or similar resource,
 	// changes to the referenced ConfigMaps can be detected and trigger rollouts or reconciliation in the operator.
 
-	PostgresConfigMapResourceVersionAnnotation   = "ols.openshift.io/postgres-configmap-version"
-	PostgresSecretResourceVersionAnnotation      = "ols.openshift.io/postgres-secret-version" // #nosec G101 -- annotation key, not a credential
-	VectorDBScriptsConfigMapVersionAnnotation    = "ols.openshift.io/vector-db-scripts-configmap-version"
-	LlamaStackConfigMapResourceVersionAnnotation = "ols.openshift.io/llamastack-configmap-version"
-	LCoreConfigMapResourceVersionAnnotation      = "ols.openshift.io/lcore-configmap-version"
-	CABundleConfigMapVersionAnnotation           = "ols.openshift.io/ca-bundle-configmap-version"
-	MCPConfigMapResourceVersionAnnotation        = "ols.openshift.io/mcp-configmap-version"
-	CloudsYAMLConfigMapVersionAnnotation         = "ols.openshift.io/clouds-yaml-configmap-version"
-	SecureYAMLSecretVersionAnnotation            = "ols.openshift.io/secure-yaml-secret-version"        // #nosec G101 -- annotation key, not a credential
-	CombinedCABundleSecretVersionAnnotation      = "ols.openshift.io/combined-ca-bundle-secret-version" // #nosec G101 -- annotation key, not a credential
+	PostgresConfigMapResourceVersionAnnotation = "ols.openshift.io/postgres-configmap-version"
+	PostgresSecretResourceVersionAnnotation    = "ols.openshift.io/postgres-secret-version" // #nosec G101 -- annotation key, not a credential
+	VectorDBScriptsConfigMapVersionAnnotation  = "ols.openshift.io/vector-db-scripts-configmap-version"
+	OGXConfigMapResourceVersionAnnotation      = "ols.openshift.io/ogx-configmap-version"
+	LCoreConfigMapResourceVersionAnnotation    = "ols.openshift.io/lcore-configmap-version"
+	CABundleConfigMapVersionAnnotation         = "ols.openshift.io/ca-bundle-configmap-version"
+	MCPConfigMapResourceVersionAnnotation      = "ols.openshift.io/mcp-configmap-version"
+	CloudsYAMLConfigMapVersionAnnotation       = "ols.openshift.io/clouds-yaml-configmap-version"
+	SecureYAMLSecretVersionAnnotation          = "ols.openshift.io/secure-yaml-secret-version"        // #nosec G101 -- annotation key, not a credential
+	CombinedCABundleSecretVersionAnnotation    = "ols.openshift.io/combined-ca-bundle-secret-version" // #nosec G101 -- annotation key, not a credential
 
 	// ---------------------------------------------------------------------------
 

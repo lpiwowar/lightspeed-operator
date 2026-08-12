@@ -104,9 +104,9 @@ type DatabaseSpec struct {
 type ContainerResourcesSpec struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={requests: {cpu: "500m", memory: "2Gi"}, limits: {cpu: "2", memory: "8Gi"}}
-	// LlamaStack sets compute resources for the llama-stack (OGX) container
+	// OGX sets compute resources for the OGX container
 	// in the lightspeed-stack deployment.
-	LlamaStack corev1.ResourceRequirements `json:"llamaStack,omitempty"`
+	OGX corev1.ResourceRequirements `json:"ogx,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={requests: {cpu: "250m", memory: "512Mi"}, limits: {cpu: "1", memory: "2Gi"}}
@@ -244,7 +244,7 @@ type LoggingConfig struct {
 	// +kubebuilder:default="all=info"
 	// +kubebuilder:validation:Pattern=`^\w+(?:=\w+)?(?:,\w+(?:=\w+)?)*$`
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OGX Log Level"
-	// Log level configuration for the OGX/llama-stack container. Supports standard levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level" (e.g., "core=debug,providers=info").
+	// Log level configuration for the OGX container. Supports standard levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level" (e.g., "core=debug,providers=info").
 	OGXLogLevel string `json:"ogxLogLevel,omitempty"`
 
 	// +kubebuilder:validation:Optional
@@ -358,7 +358,7 @@ type OpenStackLightspeedStatus struct {
 // +operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,lightspeed-postgres-server}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{Service,v1,lightspeed-app-server}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{Service,v1,lightspeed-postgres-server}}
-// +operator-sdk:csv:customresourcedefinitions:resources={{ConfigMap,v1,llama-stack-config}}
+// +operator-sdk:csv:customresourcedefinitions:resources={{ConfigMap,v1,ogx-config}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{ConfigMap,v1,lightspeed-stack-config}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{ConfigMap,v1,lightspeed-postgres-conf}}
 // +operator-sdk:csv:customresourcedefinitions:resources={{Secret,v1,lightspeed-postgres-secret}}

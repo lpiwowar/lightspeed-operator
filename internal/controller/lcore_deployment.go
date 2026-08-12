@@ -48,63 +48,63 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 	addCABundleVolumesAndMounts(&volumes, &sharedMounts)
 	addVectorDBDataVolumesAndMounts(&volumes, &sharedMounts)
 
-	// Llama cache emptydir
-	llamaCacheMounts := []corev1.VolumeMount{}
-	addLlamaCacheVolumesAndMounts(&volumes, &llamaCacheMounts)
+	// OGX cache emptydir
+	ogxCacheMounts := []corev1.VolumeMount{}
+	addOGXCacheVolumesAndMounts(&volumes, &ogxCacheMounts)
 
 	// Build env vars
-	llamaEnvVars, err := buildLlamaStackEnvVars(ctx, h, instance)
+	ogxEnvVars, err := buildOGXEnvVars(ctx, h, instance)
 	if err != nil {
-		return corev1.PodTemplateSpec{}, fmt.Errorf("failed to build llama-stack env vars: %w", err)
+		return corev1.PodTemplateSpec{}, fmt.Errorf("failed to build ogx env vars: %w", err)
 	}
 	lsEnvVars := buildLightspeedStackEnvVars(instance)
 
-	// Llama Stack container mounts: its config + shared + cache + vector_store_db data
-	llamaStackMounts := []corev1.VolumeMount{}
-	llamaStackMounts = append(llamaStackMounts, sharedMounts...)
-	llamaStackMounts = append(llamaStackMounts, llamaCacheMounts...)
+	// OGX container mounts: its config + shared + cache + vector_store_db data
+	ogxMounts := []corev1.VolumeMount{}
+	ogxMounts = append(ogxMounts, sharedMounts...)
+	ogxMounts = append(ogxMounts, ogxCacheMounts...)
 
-	llamaStackContainer := corev1.Container{
-		Name:         "llama-stack",
+	ogxContainer := corev1.Container{
+		Name:         "ogx",
 		Image:        apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
 		Command:      []string{"ogx", "run", "--insecure", VectorDBVolumeOGXConfigPath},
-		Ports:        []corev1.ContainerPort{{Name: "llama-stack", ContainerPort: LlamaStackContainerPort}},
-		VolumeMounts: llamaStackMounts,
-		Env:          llamaEnvVars,
+		Ports:        []corev1.ContainerPort{{Name: "ogx", ContainerPort: OGXContainerPort}},
+		VolumeMounts: ogxMounts,
+		Env:          ogxEnvVars,
 		StartupProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: LlamaStackHealthPath,
-					Port: intstr.FromInt32(LlamaStackContainerPort),
+					Path: OGXHealthPath,
+					Port: intstr.FromInt32(OGXContainerPort),
 				},
 			},
-			PeriodSeconds:    LlamaStackProbePeriodSeconds,
-			TimeoutSeconds:   LlamaStackProbeTimeoutSeconds,
-			FailureThreshold: LlamaStackStartupProbeFailureThreshold,
+			PeriodSeconds:    OGXProbePeriodSeconds,
+			TimeoutSeconds:   OGXProbeTimeoutSeconds,
+			FailureThreshold: OGXStartupProbeFailureThreshold,
 		},
 		LivenessProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: LlamaStackHealthPath,
-					Port: intstr.FromInt32(LlamaStackContainerPort),
+					Path: OGXHealthPath,
+					Port: intstr.FromInt32(OGXContainerPort),
 				},
 			},
-			PeriodSeconds:    LlamaStackProbePeriodSeconds,
-			TimeoutSeconds:   LlamaStackProbeTimeoutSeconds,
-			FailureThreshold: LlamaStackProbeFailureThreshold,
+			PeriodSeconds:    OGXProbePeriodSeconds,
+			TimeoutSeconds:   OGXProbeTimeoutSeconds,
+			FailureThreshold: OGXProbeFailureThreshold,
 		},
 		ReadinessProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: LlamaStackHealthPath,
-					Port: intstr.FromInt32(LlamaStackContainerPort),
+					Path: OGXHealthPath,
+					Port: intstr.FromInt32(OGXContainerPort),
 				},
 			},
-			PeriodSeconds:    LlamaStackProbePeriodSeconds,
-			TimeoutSeconds:   LlamaStackProbeTimeoutSeconds,
-			FailureThreshold: LlamaStackProbeFailureThreshold,
+			PeriodSeconds:    OGXProbePeriodSeconds,
+			TimeoutSeconds:   OGXProbeTimeoutSeconds,
+			FailureThreshold: OGXProbeFailureThreshold,
 		},
-		Resources:       instance.Spec.Resources.LlamaStack,
+		Resources:       instance.Spec.Resources.OGX,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	}
 
@@ -143,7 +143,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 		Resources:       instance.Spec.Resources.LightspeedService,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	}
-	containers := []corev1.Container{llamaStackContainer, lightspeedStackContainer}
+	containers := []corev1.Container{ogxContainer, lightspeedStackContainer}
 
 	// Add dataverse exporter sidecar when data collection is enabled
 	if dataCollectionEnabled {
@@ -353,7 +353,7 @@ func buildOGXConfigVolume(volumeDefaultMode int32) corev1.Volume {
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: LlamaStackConfigCmName,
+					Name: OGXConfigCmName,
 				},
 				DefaultMode: toPtr(volumeDefaultMode),
 			},
@@ -408,17 +408,17 @@ func addTLSVolumesAndMounts(volumes *[]corev1.Volume, mounts *[]corev1.VolumeMou
 	})
 }
 
-// addLlamaCacheVolumesAndMounts adds an emptydir volume for llama-stack cache.
-func addLlamaCacheVolumesAndMounts(volumes *[]corev1.Volume, mounts *[]corev1.VolumeMount) {
+// addOGXCacheVolumesAndMounts adds an emptydir volume for ogx cache.
+func addOGXCacheVolumesAndMounts(volumes *[]corev1.Volume, mounts *[]corev1.VolumeMount) {
 	*volumes = append(*volumes, corev1.Volume{
-		Name: "llama-cache",
+		Name: "ogx-cache",
 		VolumeSource: corev1.VolumeSource{
 			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	})
 	*mounts = append(*mounts, corev1.VolumeMount{
-		Name:      "llama-cache",
-		MountPath: "/tmp/llama-stack",
+		Name:      "ogx-cache",
+		MountPath: "/tmp/ogx",
 	})
 }
 
@@ -521,9 +521,9 @@ func addCABundleVolumesAndMounts(volumes *[]corev1.Volume, mounts *[]corev1.Volu
 	})
 }
 
-// buildLlamaStackEnvVars builds environment variables for llama-stack,
+// buildOGXEnvVars builds environment variables for ogx
 // primarily provider API keys read from Kubernetes secrets.
-func buildLlamaStackEnvVars(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) ([]corev1.EnvVar, error) {
+func buildOGXEnvVars(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) ([]corev1.EnvVar, error) {
 	envVars := []corev1.EnvVar{}
 
 	{
@@ -623,10 +623,10 @@ func buildLlamaStackEnvVars(ctx context.Context, h *common_helper.Helper, instan
 	}
 
 	// Postgres credentials for ${env.POSTGRESQL_PASSWORD} and ${env.POSTGRESQL_USER}
-	// substitution in llama-stack config
+	// substitution in ogx config
 	envVars = append(envVars, buildPostgresCredsEnvVars()...)
 
-	// PostgreSQL SSL configuration for OGX (llama-stack).
+	// PostgreSQL SSL configuration for OGX
 	// OGX's PostgresSqlStoreConfig does not support ssl_mode/ca_cert_path fields yet
 	// (ogx-ai/ogx#5978), so we configure asyncpg via standard libpq environment
 	// variables to enforce TLS with full certificate verification.
@@ -639,12 +639,8 @@ func buildLlamaStackEnvVars(ctx context.Context, h *common_helper.Helper, instan
 		Value: CABundleMountPath,
 	})
 
-	// Logging configuration - set both for compatibility with llama-stack and OGX
+	// Logging configuration
 	ogxLogLevel := getOGXLogLevel(instance)
-	envVars = append(envVars, corev1.EnvVar{
-		Name:  "LLAMA_STACK_LOGGING",
-		Value: ogxLogLevel,
-	})
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "OGX_LOGGING",
 		Value: ogxLogLevel,
@@ -772,7 +768,7 @@ func buildLightspeedStackReadinessProbe() *corev1.Probe {
 	}
 }
 
-// getOGXLogLevel returns the log level for OGX/llama-stack container.
+// getOGXLogLevel returns the log level for OGX container.
 // Supports either standard levels (INFO, DEBUG, WARNING, ERROR, CRITICAL) or fine-grained control.
 // Examples: "INFO" -> "all=info", "DEBUG" -> "all=debug", "core=debug,providers=info" -> "core=debug,providers=info"
 // Defaults to "all=info" if not specified.
@@ -805,13 +801,13 @@ func buildConfigMapAnnotations(ctx context.Context, h *common_helper.Helper) (ma
 		annotations[LCoreConfigMapResourceVersionAnnotation] = lcoreVersion
 	}
 
-	llamaVersion, err := getConfigMapResourceVersion(ctx, h, LlamaStackConfigCmName, h.GetBeforeObject().GetNamespace())
+	ogxVersion, err := getConfigMapResourceVersion(ctx, h, OGXConfigCmName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get Llama Stack configmap resource version: %w", err)
+			return nil, fmt.Errorf("failed to get OGX configmap resource version: %w", err)
 		}
 	} else {
-		annotations[LlamaStackConfigMapResourceVersionAnnotation] = llamaVersion
+		annotations[OGXConfigMapResourceVersionAnnotation] = ogxVersion
 	}
 
 	vectorDBScriptsVersion, err := getConfigMapResourceVersion(ctx, h, VectorDBScriptsConfigMapName, h.GetBeforeObject().GetNamespace())
