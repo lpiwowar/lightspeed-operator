@@ -89,15 +89,15 @@ data:
     inference:
       default_model: ibm-granite/granite-3.1-8b-instruct
       default_provider: openstack-lightspeed-provider
-    llama_stack:
-      url: http://localhost:8321
-      use_as_library_client: false
     mcp_servers:
     - authorization_headers:
         OCP_TOKEN: kubernetes
       name: rhoso-ocp-tools
       url: http://127.0.0.1:8080/openshift/
     name: Lightspeed Core Service (LCS)
+    ogx:
+      url: http://localhost:8321
+      use_as_library_client: false
     service:
       access_log: true
       auth_enabled: true

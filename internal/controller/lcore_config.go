@@ -319,7 +319,9 @@ func buildLCoreConfigYAML(ctx context.Context, h *common_helper.Helper, instance
 
 	ragInline := []interface{}{"okp"}
 	ragConfig := map[string]interface{}{
-		"inline": ragInline,
+		"inline": map[string]interface{}{
+			"sources": ragInline,
+		},
 	}
 
 	mcpServers, err := buildLCoreMCPServersConfigIfEnabled(instance)
@@ -331,19 +333,22 @@ func buildLCoreConfigYAML(ctx context.Context, h *common_helper.Helper, instance
 	config := map[string]interface{}{
 		"name":                 "Lightspeed Core Service (LCS)",
 		"service":              buildLCoreServiceConfig(h, instance),
-		"llama_stack":          buildLCoreLlamaStackConfig(),
+		"ogx":                  buildLCoreLlamaStackConfig(),
 		"user_data_collection": buildLCoreUserDataCollectionConfig(h, instance),
 		"authentication":       buildLCoreAuthenticationConfig(h, instance),
 		"inference":            buildLCoreInferenceConfig(h, instance),
 		"database":             buildLCoreDatabaseConfig(h, instance),
 		"customization":        buildLCoreCustomizationConfig(),
 		"conversation_cache":   buildLCoreConversationCacheConfig(h, instance),
-		"byok_rag":             []interface{}{},
-		"rag":                  ragConfig,
-		"mcp_servers":          mcpServers,
+		"rag": map[string]interface{}{
+			"byok": map[string]interface{}{
+				"stores": []interface{}{},
+			},
+			"okp":       buildOKPConfig(ctx, h, instance),
+			"retrieval": ragConfig,
+		},
+		"mcp_servers": mcpServers,
 	}
-
-	config["okp"] = buildOKPConfig(ctx, h, instance)
 
 	if quotaHandlers := buildLCoreQuotaHandlersConfig(h, instance); quotaHandlers != nil {
 		config["quota_handlers"] = quotaHandlers
