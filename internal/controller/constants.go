@@ -62,7 +62,7 @@ const (
 	PostgresNetworkPolicyName                    = "lightspeed-postgres-server"
 	PostgresServicePort                          = int32(5432)
 	PostgresLightspeedStackDbName                = "lightspeed-stack"
-	PostgresLlamaStackDbName                     = "llamastack"
+	PostgresLlamaStackDbName                     = "ogx"
 	PostgresSharedBuffers                        = "256MB"
 	PostgresMaxConnections                       = 100
 	OpenStackLightspeedComponentPasswordFileName = "password"

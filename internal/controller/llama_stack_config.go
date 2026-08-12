@@ -34,13 +34,12 @@ func buildLlamaStackCoreConfig(_ *common_helper.Helper, _ *apiv1beta1.OpenStackL
 		// Note: Does NOT affect PostgreSQL database name (llama-stack uses hardcoded "llamastack")
 		"image_name": "openstack-lightspeed-configuration",
 
-		// Minimal APIs for RAG + MCP: agents (for MCP), files, inference, safety (required by agents),
+		// Minimal APIs for RAG + MCP: responeses (for MCP), files, inference,
 		// telemetry, tool_runtime, vector_io.
 		"apis": []string{
-			"agents",
 			"files",
 			"inference",
-			"safety",
+			"responses",
 			"tool_runtime",
 			"vector_io",
 		},
@@ -78,11 +77,11 @@ func buildLlamaStackFileProviders(_ *common_helper.Helper, _ *apiv1beta1.OpenSta
 	}
 }
 
-func buildLlamaStackAgentProviders(_ *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) []interface{} {
+func buildLlamaStackResponsesProviders(_ *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) []interface{} {
 	return []interface{}{
 		map[string]interface{}{
-			"provider_id":   "meta-reference",
-			"provider_type": "inline::meta-reference",
+			"provider_id":   "builtin",
+			"provider_type": "inline::builtin",
 			"config": map[string]interface{}{
 				"persistence": map[string]interface{}{
 					"agent_state": map[string]interface{}{
@@ -207,19 +206,6 @@ func buildLlamaStackInferenceProviders(_ context.Context, _ *common_helper.Helpe
 	return providers, nil
 }
 
-// Safety API - Required by agents provider (for MCP)
-func buildLlamaStackSafety(_ *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) []interface{} {
-	return []interface{}{
-		map[string]interface{}{
-			"provider_id":   "llama-guard",
-			"provider_type": "inline::llama-guard",
-			"config": map[string]interface{}{
-				"excluded_categories": []interface{}{},
-			},
-		},
-	}
-}
-
 func buildLlamaStackToolRuntime(_ *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) []interface{} {
 	return []interface{}{
 		map[string]interface{}{
@@ -228,8 +214,8 @@ func buildLlamaStackToolRuntime(_ *common_helper.Helper, _ *apiv1beta1.OpenStack
 			"config":        map[string]interface{}{},
 		},
 		map[string]interface{}{
-			"provider_id":   "rag-runtime",
-			"provider_type": "inline::rag-runtime",
+			"provider_id":   "file-search",
+			"provider_type": "inline::file-search",
 			"config":        map[string]interface{}{},
 		},
 	}
@@ -272,7 +258,7 @@ func buildOKPVectorIOProvider(chunkFilterQuery string) map[string]interface{} {
 			"content_field":       "${env.SOLR_CONTENT_FIELD:=chunk}",
 			"vector_field":        "${env.SOLR_VECTOR_FIELD:=chunk_vector}",
 			"embedding_dimension": "${env.SOLR_EMBEDDING_DIM:=384}",
-			"embedding_model":     "sentence-transformers/" + OKPEmbeddingModelMountPath,
+			"embedding_model":     "sentence-transformers/solr_embedding",
 			"persistence": map[string]interface{}{
 				"backend":   "kv_default",
 				"namespace": "portal-rag",
@@ -394,7 +380,7 @@ func buildLlamaStackVectorStores(_ *common_helper.Helper, _ *apiv1beta1.OpenStac
 			"vector_store_id":     "portal-rag",
 			"provider_id":         "okp_solr",
 			"embedding_dimension": 384,
-			"embedding_model":     "sentence-transformers/" + OKPEmbeddingModelMountPath,
+			"embedding_model":     "sentence-transformers/solr_embedding",
 		},
 	}
 }
@@ -402,8 +388,8 @@ func buildLlamaStackVectorStores(_ *common_helper.Helper, _ *apiv1beta1.OpenStac
 func buildLlamaStackToolGroups(_ *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) []interface{} {
 	return []interface{}{
 		map[string]interface{}{
-			"toolgroup_id": "builtin::rag",
-			"provider_id":  "rag-runtime",
+			"toolgroup_id": "builtin::file_search",
+			"provider_id":  "file-search",
 		},
 	}
 }
@@ -425,9 +411,8 @@ func buildLlamaStackYAML(ctx context.Context, h *common_helper.Helper, instance 
 	// Build providers map - only include providers for enabled APIs
 	config["providers"] = map[string]interface{}{
 		"files":        buildLlamaStackFileProviders(h, instance),
-		"agents":       buildLlamaStackAgentProviders(h, instance),
+		"responses":    buildLlamaStackResponsesProviders(h, instance),
 		"inference":    inferenceProviders,
-		"safety":       buildLlamaStackSafety(h, instance),
 		"tool_runtime": buildLlamaStackToolRuntime(h, instance),
 		"vector_io":    buildLlamaStackVectorIO(h, instance, okpChunkFilterQuery),
 	}

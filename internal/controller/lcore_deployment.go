@@ -67,7 +67,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 	llamaStackContainer := corev1.Container{
 		Name:         "llama-stack",
 		Image:        apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
-		Command:      []string{"llama", "stack", "run", VectorDBVolumeOGXConfigPath},
+		Command:      []string{"ogx", "run", VectorDBVolumeOGXConfigPath},
 		Ports:        []corev1.ContainerPort{{Name: "llama-stack", ContainerPort: LlamaStackContainerPort}},
 		VolumeMounts: llamaStackMounts,
 		Env:          llamaEnvVars,
