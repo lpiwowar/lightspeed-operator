@@ -416,7 +416,7 @@ func getOpenStackClient(
 		tlsCfg = &openstack_lib.TLSConfig{CACerts: []string{string(caPEM)}}
 	}
 
-	osClient, err := openstack_lib.NewOpenStack(log, openstack_lib.AuthOpts{
+	osClient, err := openstack_lib.NewOpenStack(ctx, log, openstack_lib.AuthOpts{
 		AuthURL:    cloudCfg.Auth.AuthURL,
 		Username:   cloudCfg.Auth.Username,
 		Password:   cloudCfg.Auth.Password,
@@ -487,7 +487,7 @@ func ensureServiceUser(
 		return err
 	}
 
-	userID, err := osClient.CreateUser(log, openstack_lib.User{
+	userID, err := osClient.CreateUser(ctx, log, openstack_lib.User{
 		Name:     LightspeedServiceUserName,
 		Password: password,
 		DomainID: LightspeedServiceUserDomain,
@@ -496,12 +496,12 @@ func ensureServiceUser(
 		return fmt.Errorf("failed to create keystone user: %w", err)
 	}
 
-	serviceProject, err := osClient.GetProject(log, "service", LightspeedServiceUserDomain)
+	serviceProject, err := osClient.GetProject(ctx, log, "service", LightspeedServiceUserDomain)
 	if err != nil {
 		return fmt.Errorf("failed to get service project: %w", err)
 	}
 
-	if err := osClient.AssignUserRole(log, "admin", userID, serviceProject.ID); err != nil {
+	if err := osClient.AssignUserRole(ctx, log, "admin", userID, serviceProject.ID); err != nil {
 		return fmt.Errorf("failed to assign admin role: %w", err)
 	}
 
@@ -970,7 +970,7 @@ func (r *OpenStackLightspeedReconciler) reconcileDeleteOpenStackResources(
 	// Delete keystone user (best-effort)
 	osClient, _, err := getOpenStackClient(ctx, helper, oscp, nil)
 	if err == nil {
-		if err := osClient.DeleteUser(log, LightspeedServiceUserName, LightspeedServiceUserDomain); err != nil {
+		if err := osClient.DeleteUser(ctx, log, LightspeedServiceUserName, LightspeedServiceUserDomain); err != nil {
 			log.Info("Failed to delete keystone user (best-effort)", "error", err)
 		}
 	} else {
