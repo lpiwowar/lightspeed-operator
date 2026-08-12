@@ -14,7 +14,7 @@ inference_store:
   type: sqlite
 logging: null
 metadata_store:
-  db_path: /tmp/llama-stack/registry.db
+  db_path: /tmp/ogx/registry.db
   namespace: null
   type: sqlite
 providers:
@@ -24,7 +24,7 @@ providers:
         backend: sql_default
         namespace: files_metadata
         table_name: files_metadata
-      storage_dir: /tmp/llama-stack-files
+      storage_dir: /tmp/ogx-files
     provider_id: localfs
     provider_type: inline::localfs
   inference:
@@ -140,7 +140,7 @@ server:
 storage:
   backends:
     kv_default:
-      db_path: /tmp/llama-stack/kv_store.db
+      db_path: /tmp/ogx/kv_store.db
       type: kv_sqlite
     postgres_backend:
       db: ogx
@@ -150,7 +150,7 @@ storage:
       type: sql_postgres
       user: ${env.POSTGRESQL_USER}
     sql_default:
-      db_path: /tmp/llama-stack/sql_store.db
+      db_path: /tmp/ogx/sql_store.db
       type: sql_sqlite
     kv_rag_UUID_os_product_docs:
       type: kv_sqlite

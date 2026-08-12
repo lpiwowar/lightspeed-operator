@@ -83,7 +83,7 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: llama-stack-config
+  name: ogx-config
   namespace: openstack-lightspeed
 ---
 apiVersion: v1
@@ -111,7 +111,7 @@ spec:
         - name: vector-database-collect
         - name: vector-database-config-build
       containers:
-        - name: llama-stack
+        - name: ogx
           resources:
             requests:
               cpu: 500m
@@ -141,8 +141,6 @@ spec:
               value: verify-full
             - name: PGSSLROOTCERT
               value: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-            - name: LLAMA_STACK_LOGGING
-              value: core=debug,providers=info
             - name: OGX_LOGGING
               value: core=debug,providers=info
             - name: VECTOR_DB_DATA_PATH
@@ -156,8 +154,8 @@ spec:
               readOnly: true
             - name: vector-db-discovered-values
               mountPath: /vector-db-discovered-values
-            - name: llama-cache
-              mountPath: /tmp/llama-stack
+            - name: ogx-cache
+              mountPath: /tmp/ogx
         - name: lightspeed-service-api
           resources:
             requests:
@@ -194,7 +192,7 @@ spec:
       volumes:
         - name: ogx-config
           configMap:
-            name: llama-stack-config
+            name: ogx-config
         - name: lightspeed-stack-config
           configMap:
             name: lightspeed-stack-config
@@ -206,7 +204,7 @@ spec:
             name: openstack-lightspeed-ca-bundle
         - name: vector-db-discovered-values
           emptyDir: {}
-        - name: llama-cache
+        - name: ogx-cache
           emptyDir: {}
         - name: tls-certs
           secret:

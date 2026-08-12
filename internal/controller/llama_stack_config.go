@@ -30,8 +30,8 @@ func buildLlamaStackCoreConfig(_ *common_helper.Helper, _ *apiv1beta1.OpenStackL
 	return map[string]interface{}{
 		"version": "2",
 
-		// image_name is a semantic identifier for the llama-stack configuration
-		// Note: Does NOT affect PostgreSQL database name (llama-stack uses hardcoded "llamastack")
+		// image_name is a semantic identifier for the ogx configuration
+		// Note: Does NOT affect PostgreSQL database name (ogx uses hardcoded value)
 		"image_name": "openstack-lightspeed-configuration",
 
 		// Minimal APIs for RAG + MCP: responeses (for MCP), files, inference,
@@ -53,7 +53,7 @@ func buildLlamaStackCoreConfig(_ *common_helper.Helper, _ *apiv1beta1.OpenStackL
 		},
 		"logging": nil,
 		"metadata_store": map[string]interface{}{
-			"db_path":   "/tmp/llama-stack/registry.db",
+			"db_path":   "/tmp/ogx/registry.db",
 			"namespace": nil,
 			"type":      "sqlite",
 		},
@@ -66,7 +66,7 @@ func buildLlamaStackFileProviders(_ *common_helper.Helper, _ *apiv1beta1.OpenSta
 			"provider_id":   "localfs",
 			"provider_type": "inline::localfs",
 			"config": map[string]interface{}{
-				"storage_dir": "/tmp/llama-stack-files",
+				"storage_dir": "/tmp/ogx-files",
 				"metadata_store": map[string]interface{}{
 					"backend":    "sql_default",
 					"namespace":  "files_metadata",
@@ -297,11 +297,11 @@ func buildLlamaStackStorage(_ *common_helper.Helper, instance *apiv1beta1.OpenSt
 	backends := map[string]interface{}{
 		"sql_default": map[string]interface{}{
 			"type":    "sql_sqlite",
-			"db_path": "/tmp/llama-stack/sql_store.db",
+			"db_path": "/tmp/ogx/sql_store.db",
 		},
 		"kv_default": map[string]interface{}{
 			"type":    "kv_sqlite",
-			"db_path": "/tmp/llama-stack/kv_store.db",
+			"db_path": "/tmp/ogx/kv_store.db",
 		},
 		"postgres_backend": map[string]interface{}{
 			"type":     "sql_postgres",
@@ -324,7 +324,7 @@ func buildLlamaStackStorage(_ *common_helper.Helper, instance *apiv1beta1.OpenSt
 			"backend":    "sql_default",
 		},
 		"conversations": map[string]interface{}{
-			"table_name": "openai_conversations", // Required by config schema but ignored - llama-stack uses hardcoded names
+			"table_name": "openai_conversations", // Required by config schema but ignored - ogx uses hardcoded names
 			"backend":    "postgres_backend",
 		},
 	}

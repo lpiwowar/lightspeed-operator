@@ -81,8 +81,8 @@ const (
 	PostgresVarRunVolumeMountPath                = "/var/run/postgresql"
 
 	// PostgresSQLUsername is non-admin user that should be used by lightspeed-stack and
-	// llama-stack (OGX) to access the PostgreSQL database. This user gets created by the
-	// PostgreSQL container by setting the POSTGRESQL_USER and POSTGRESQL_PASSWORD environment
+	// (OGX) to access the PostgreSQL database. This user gets created by the PostgreSQL
+	// container by setting the POSTGRESQL_USER and POSTGRESQL_PASSWORD environment
 	// variable.
 	PostgresSQLUsername = "lightspeed-app-user"
 
@@ -113,7 +113,7 @@ const (
 	// -- LCore specific ---------------------------------------------------------
 
 	LlamaStackContainerPort  = int32(8321)
-	LlamaStackConfigCmName   = "llama-stack-config"
+	LlamaStackConfigCmName   = "ogx-config"
 	LCoreConfigCmName        = "lightspeed-stack-config"
 	LCoreDeploymentName      = "lightspeed-stack-deployment"
 	LCoreConfigMountPath     = "/app-root/lightspeed-stack.yaml"
@@ -122,7 +122,7 @@ const (
 
 	// ---------------------------------------------------------------------------
 
-	// -- Health probe settings for the llama-stack/OGX container. ---------------
+	// -- Health probe settings for the stack/OGX container. ---------------------
 
 	// The startup probe allows up to 30 failures (300s) for the slow initialization,
 	// while liveness and readiness probes use a tighter threshold of 3 failures.
