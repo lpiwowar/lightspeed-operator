@@ -19,7 +19,7 @@ package controller
 import (
 	"context"
 	"crypto/rand"
-	_ "embed"
+	_ "embed" // Required for go:embed directives in this package
 	"encoding/json"
 	"errors"
 	"fmt"

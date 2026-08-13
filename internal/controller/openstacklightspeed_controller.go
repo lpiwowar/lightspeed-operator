@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package controller implements OpenShift reconciliation loops for OpenStack Lightspeed.
 package controller
 
 import (
@@ -104,6 +105,7 @@ func (r *OpenStackLightspeedReconciler) GetLogger(ctx context.Context) logr.Logg
 // +kubebuilder:rbac:groups=operator.openshift.io,resources=consoles,verbs=get;list;watch;update
 // +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch
 
+// Reconcile reads the state of the cluster for a OpenStackLightspeed object and makes changes towards the state defined in the spec.
 func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, e error) {
 	Log := r.GetLogger(ctx)
 	Log.Info("OpenStackLightspeed Reconciling")
@@ -235,7 +237,7 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 		{Name: "ConsoleDeployment", Task: ReconcileConsoleDeployment},
 	}
 
-	if err := ReconcileTasks(helper, ctx, instance, reconcileTasks); err != nil {
+	if err := ReconcileTasks(ctx, helper, instance, reconcileTasks); err != nil {
 		Log.Error(err, "reconcile tasks failed")
 		instance.Status.Conditions.Set(condition.FalseCondition(
 			apiv1beta1.OpenStackLightspeedReadyCondition,
@@ -266,7 +268,7 @@ func (r *OpenStackLightspeedReconciler) reconcileDelete(
 	}
 
 	// Execute deletion tasks in order (fail-fast: stop on first error)
-	if err := ReconcileTasksFailFast(helper, ctx, instance, deletionTasks); err != nil {
+	if err := ReconcileTasksFailFast(ctx, helper, instance, deletionTasks); err != nil {
 		Log.Error(err, "failed to delete cluster-scoped resources")
 		return err
 	}

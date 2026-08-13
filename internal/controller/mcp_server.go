@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package controller
 
 import (
@@ -179,7 +180,7 @@ func GetMCPServerURL() string {
 // ---------------------------------------------------------------------------
 
 // ReconcileMCPServerTask reconciles the MCP server as a ReconcileFunc.
-func (r *OpenStackLightspeedReconciler) ReconcileMCPServerTask(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func (r *OpenStackLightspeedReconciler) ReconcileMCPServerTask(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	rhosoMCPEnabled, err := isRHOSOMCPEnabled(instance)
 	if err != nil {
 		return fmt.Errorf("failed to parse dev config: %w", err)
@@ -358,6 +359,7 @@ func parseCloudConfig(
 	case 0:
 		return nil, errors.New("no cloud entry found in clouds.yaml")
 	case 1:
+		//nolint:revive
 		for name = range clouds.Clouds {
 		}
 	default:

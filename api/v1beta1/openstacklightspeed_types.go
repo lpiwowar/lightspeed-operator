@@ -332,6 +332,8 @@ func (instance OpenStackLightspeed) IsReady() bool {
 	return instance.Status.Conditions.IsTrue(OpenStackLightspeedReadyCondition)
 }
 
+// OpenStackLightspeedDefaults holds the default values that should be used across
+// the operator's code (e.g., default images)
 type OpenStackLightspeedDefaults struct {
 	RAGImageURL          string
 	LCoreImageURL        string
@@ -344,6 +346,9 @@ type OpenStackLightspeedDefaults struct {
 	MaxTokensForResponse int
 }
 
+// OpenStackLightspeedDefaultValues is an instance of OpenStackLightspeedDefaults that holds
+// the default values that should be used across the operator's code (e.g., default images).
+// Initialized in SetupDefaults() at the start of the operator.
 var OpenStackLightspeedDefaultValues OpenStackLightspeedDefaults
 
 // SetupDefaults - initializes OpenStackLightspeedDefaultValues with default values from env vars

@@ -18,7 +18,7 @@ package controller
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // Required for go:embed directives in this package
 	"fmt"
 
 	common_helper "github.com/openstack-k8s-operators/lib-common/modules/common/helper"

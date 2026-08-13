@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// main provides the entry point for the lightspeed-operator.
 package main
 
 import (

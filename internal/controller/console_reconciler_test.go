@@ -17,8 +17,8 @@ limitations under the License.
 package controller
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	consolev1 "github.com/openshift/api/console/v1"
 	apiv1beta1 "github.com/openstack-k8s-operators/lightspeed-operator/api/v1beta1"
@@ -27,274 +27,274 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
-var _ = Describe("Console Plugin", func() {
+var _ = ginkgo.Describe("Console Plugin", func() {
 
-	BeforeEach(func() {
+	ginkgo.BeforeEach(func() {
 		// Set up defaults so the builder functions have image URLs
 		apiv1beta1.SetupDefaults()
 	})
 
-	Describe("generateConsoleSelectorLabels", func() {
-		It("should return the expected labels", func() {
+	ginkgo.Describe("generateConsoleSelectorLabels", func() {
+		ginkgo.It("should return the expected labels", func() {
 			labels := generateConsoleSelectorLabels()
-			Expect(labels).To(HaveKeyWithValue("app.kubernetes.io/component", "console-plugin"))
-			Expect(labels).To(HaveKeyWithValue("app.kubernetes.io/managed-by", "openstack-lightspeed-operator"))
-			Expect(labels).To(HaveKeyWithValue("app.kubernetes.io/name", "lightspeed-console-plugin"))
-			Expect(labels).To(HaveKeyWithValue("app.kubernetes.io/part-of", "openstack-lightspeed"))
+			gomega.Expect(labels).To(gomega.HaveKeyWithValue("app.kubernetes.io/component", "console-plugin"))
+			gomega.Expect(labels).To(gomega.HaveKeyWithValue("app.kubernetes.io/managed-by", "openstack-lightspeed-operator"))
+			gomega.Expect(labels).To(gomega.HaveKeyWithValue("app.kubernetes.io/name", "lightspeed-console-plugin"))
+			gomega.Expect(labels).To(gomega.HaveKeyWithValue("app.kubernetes.io/part-of", "openstack-lightspeed"))
 		})
 	})
 
-	Describe("buildConsoleDeploymentSpec", func() {
+	ginkgo.Describe("buildConsoleDeploymentSpec", func() {
 		var spec appsv1.DeploymentSpec
 
-		BeforeEach(func() {
+		ginkgo.BeforeEach(func() {
 			instance := &apiv1beta1.OpenStackLightspeed{
 				Spec: apiv1beta1.OpenStackLightspeedSpec{},
 			}
 			spec = buildConsoleDeploymentSpec(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL, instance)
 		})
 
-		It("should have one replica", func() {
-			Expect(spec.Replicas).NotTo(BeNil())
-			Expect(*spec.Replicas).To(Equal(int32(1)))
+		ginkgo.It("should have one replica", func() {
+			gomega.Expect(spec.Replicas).NotTo(gomega.BeNil())
+			gomega.Expect(*spec.Replicas).To(gomega.Equal(int32(1)))
 		})
 
-		It("should have correct selector labels", func() {
-			Expect(spec.Selector.MatchLabels).To(Equal(generateConsoleSelectorLabels()))
+		ginkgo.It("should have correct selector labels", func() {
+			gomega.Expect(spec.Selector.MatchLabels).To(gomega.Equal(generateConsoleSelectorLabels()))
 		})
 
-		It("should have one container with the console image", func() {
+		ginkgo.It("should have one container with the console image", func() {
 			containers := spec.Template.Spec.Containers
-			Expect(containers).To(HaveLen(1))
-			Expect(containers[0].Name).To(Equal("lightspeed-console-plugin"))
-			Expect(containers[0].Image).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
+			gomega.Expect(containers).To(gomega.HaveLen(1))
+			gomega.Expect(containers[0].Name).To(gomega.Equal("lightspeed-console-plugin"))
+			gomega.Expect(containers[0].Image).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
 		})
 
-		It("should expose HTTPS port 9443", func() {
+		ginkgo.It("should expose HTTPS port 9443", func() {
 			ports := spec.Template.Spec.Containers[0].Ports
-			Expect(ports).To(HaveLen(1))
-			Expect(ports[0].ContainerPort).To(Equal(ConsoleUIHTTPSPort))
-			Expect(ports[0].Name).To(Equal("https"))
-			Expect(ports[0].Protocol).To(Equal(corev1.ProtocolTCP))
+			gomega.Expect(ports).To(gomega.HaveLen(1))
+			gomega.Expect(ports[0].ContainerPort).To(gomega.Equal(ConsoleUIHTTPSPort))
+			gomega.Expect(ports[0].Name).To(gomega.Equal("https"))
+			gomega.Expect(ports[0].Protocol).To(gomega.Equal(corev1.ProtocolTCP))
 		})
 
-		It("should have TLS cert, nginx config, nginx temp, and locales-rewrite volume mounts", func() {
+		ginkgo.It("should have TLS cert, nginx config, nginx temp, and locales-rewrite volume mounts", func() {
 			mounts := spec.Template.Spec.Containers[0].VolumeMounts
-			Expect(mounts).To(HaveLen(4))
+			gomega.Expect(mounts).To(gomega.HaveLen(4))
 
 			var names []string
 			for _, m := range mounts {
 				names = append(names, m.Name)
 			}
-			Expect(names).To(ContainElements("lightspeed-console-plugin-cert", "nginx-config", "nginx-temp", "locales-rewrite"))
+			gomega.Expect(names).To(gomega.ContainElements("lightspeed-console-plugin-cert", "nginx-config", "nginx-temp", "locales-rewrite"))
 		})
 
-		It("should mount locales-rewrite with SubPath at the locales file path", func() {
+		ginkgo.It("should mount locales-rewrite with SubPath at the locales file path", func() {
 			mounts := spec.Template.Spec.Containers[0].VolumeMounts
 			var found bool
 			for _, m := range mounts {
 				if m.Name == "locales-rewrite" {
 					found = true
-					Expect(m.MountPath).To(Equal(consoleLocalesPath))
-					Expect(m.SubPath).To(Equal(consoleLocalesFilename))
-					Expect(m.ReadOnly).To(BeTrue())
+					gomega.Expect(m.MountPath).To(gomega.Equal(consoleLocalesPath))
+					gomega.Expect(m.SubPath).To(gomega.Equal(consoleLocalesFilename))
+					gomega.Expect(m.ReadOnly).To(gomega.BeTrue())
 				}
 			}
-			Expect(found).To(BeTrue())
+			gomega.Expect(found).To(gomega.BeTrue())
 		})
 
-		It("should have TLS cert volume from secret", func() {
+		ginkgo.It("should have TLS cert volume from secret", func() {
 			volumes := spec.Template.Spec.Volumes
 			var found bool
 			for _, v := range volumes {
 				if v.Name == "lightspeed-console-plugin-cert" {
 					found = true
-					Expect(v.VolumeSource.Secret).NotTo(BeNil())
-					Expect(v.VolumeSource.Secret.SecretName).To(Equal(ConsoleUIServiceCertSecretName))
+					gomega.Expect(v.VolumeSource.Secret).NotTo(gomega.BeNil())
+					gomega.Expect(v.VolumeSource.Secret.SecretName).To(gomega.Equal(ConsoleUIServiceCertSecretName))
 				}
 			}
-			Expect(found).To(BeTrue())
+			gomega.Expect(found).To(gomega.BeTrue())
 		})
 
-		It("should have nginx config volume from configmap", func() {
+		ginkgo.It("should have nginx config volume from configmap", func() {
 			volumes := spec.Template.Spec.Volumes
 			var found bool
 			for _, v := range volumes {
 				if v.Name == "nginx-config" {
 					found = true
-					Expect(v.VolumeSource.ConfigMap).NotTo(BeNil())
-					Expect(v.VolumeSource.ConfigMap.Name).To(Equal(ConsoleUIConfigMapName))
+					gomega.Expect(v.VolumeSource.ConfigMap).NotTo(gomega.BeNil())
+					gomega.Expect(v.VolumeSource.ConfigMap.Name).To(gomega.Equal(ConsoleUIConfigMapName))
 				}
 			}
-			Expect(found).To(BeTrue())
+			gomega.Expect(found).To(gomega.BeTrue())
 		})
 
-		It("should have nginx temp emptyDir volume", func() {
+		ginkgo.It("should have nginx temp emptyDir volume", func() {
 			volumes := spec.Template.Spec.Volumes
 			var found bool
 			for _, v := range volumes {
 				if v.Name == "nginx-temp" {
 					found = true
-					Expect(v.VolumeSource.EmptyDir).NotTo(BeNil())
+					gomega.Expect(v.VolumeSource.EmptyDir).NotTo(gomega.BeNil())
 				}
 			}
-			Expect(found).To(BeTrue())
+			gomega.Expect(found).To(gomega.BeTrue())
 		})
 
-		It("should use the console service account", func() {
-			Expect(spec.Template.Spec.ServiceAccountName).To(Equal(ConsoleUIServiceAccountName))
+		ginkgo.It("should use the console service account", func() {
+			gomega.Expect(spec.Template.Spec.ServiceAccountName).To(gomega.Equal(ConsoleUIServiceAccountName))
 		})
 
-		It("should have a locales-rewrite emptyDir volume", func() {
+		ginkgo.It("should have a locales-rewrite emptyDir volume", func() {
 			volumes := spec.Template.Spec.Volumes
 			var found bool
 			for _, v := range volumes {
 				if v.Name == "locales-rewrite" {
 					found = true
-					Expect(v.VolumeSource.EmptyDir).NotTo(BeNil())
+					gomega.Expect(v.VolumeSource.EmptyDir).NotTo(gomega.BeNil())
 				}
 			}
-			Expect(found).To(BeTrue())
+			gomega.Expect(found).To(gomega.BeTrue())
 		})
 
-		It("should have one init container for rewriting locales", func() {
+		ginkgo.It("should have one init container for rewriting locales", func() {
 			initContainers := spec.Template.Spec.InitContainers
-			Expect(initContainers).To(HaveLen(1))
-			Expect(initContainers[0].Name).To(Equal("rewrite-locales"))
+			gomega.Expect(initContainers).To(gomega.HaveLen(1))
+			gomega.Expect(initContainers[0].Name).To(gomega.Equal("rewrite-locales"))
 		})
 
-		It("should use the same console image for the init container", func() {
+		ginkgo.It("should use the same console image for the init container", func() {
 			initContainer := spec.Template.Spec.InitContainers[0]
 			mainContainer := spec.Template.Spec.Containers[0]
-			Expect(initContainer.Image).To(Equal(mainContainer.Image))
+			gomega.Expect(initContainer.Image).To(gomega.Equal(mainContainer.Image))
 		})
 
-		It("should have the init container command with awk for text replacement", func() {
+		ginkgo.It("should have the init container command with awk for text replacement", func() {
 			initContainer := spec.Template.Spec.InitContainers[0]
-			Expect(initContainer.Command).To(HaveLen(3))
-			Expect(initContainer.Command[0]).To(Equal("sh"))
-			Expect(initContainer.Command[1]).To(Equal("-c"))
+			gomega.Expect(initContainer.Command).To(gomega.HaveLen(3))
+			gomega.Expect(initContainer.Command[0]).To(gomega.Equal("sh"))
+			gomega.Expect(initContainer.Command[1]).To(gomega.Equal("-c"))
 			cmd := initContainer.Command[2]
-			Expect(cmd).To(ContainSubstring("awk"))
-			Expect(cmd).To(ContainSubstring("OpenShift"))
-			Expect(cmd).To(ContainSubstring("OpenStack"))
-			Expect(cmd).To(ContainSubstring(consoleLocalesPath))
-			Expect(cmd).To(ContainSubstring("/locales-rewrite/" + consoleLocalesFilename))
+			gomega.Expect(cmd).To(gomega.ContainSubstring("awk"))
+			gomega.Expect(cmd).To(gomega.ContainSubstring("OpenShift"))
+			gomega.Expect(cmd).To(gomega.ContainSubstring("OpenStack"))
+			gomega.Expect(cmd).To(gomega.ContainSubstring(consoleLocalesPath))
+			gomega.Expect(cmd).To(gomega.ContainSubstring("/locales-rewrite/" + consoleLocalesFilename))
 		})
 
-		It("should mount locales-rewrite volume in the init container", func() {
+		ginkgo.It("should mount locales-rewrite volume in the init container", func() {
 			initContainer := spec.Template.Spec.InitContainers[0]
-			Expect(initContainer.VolumeMounts).To(HaveLen(1))
-			Expect(initContainer.VolumeMounts[0].Name).To(Equal("locales-rewrite"))
-			Expect(initContainer.VolumeMounts[0].MountPath).To(Equal("/locales-rewrite"))
+			gomega.Expect(initContainer.VolumeMounts).To(gomega.HaveLen(1))
+			gomega.Expect(initContainer.VolumeMounts[0].Name).To(gomega.Equal("locales-rewrite"))
+			gomega.Expect(initContainer.VolumeMounts[0].MountPath).To(gomega.Equal("/locales-rewrite"))
 		})
 	})
 
-	Describe("buildConsolePluginSpec", func() {
+	ginkgo.Describe("buildConsolePluginSpec", func() {
 		const testNamespace = "test-ns"
 		var spec = buildConsolePluginSpec(testNamespace)
 
-		It("should have service backend", func() {
-			Expect(spec.Backend.Type).To(Equal(consolev1.Service))
-			Expect(spec.Backend.Service).NotTo(BeNil())
-			Expect(spec.Backend.Service.Name).To(Equal(ConsoleUIServiceName))
-			Expect(spec.Backend.Service.Namespace).To(Equal(testNamespace))
-			Expect(spec.Backend.Service.Port).To(Equal(ConsoleUIHTTPSPort))
+		ginkgo.It("should have service backend", func() {
+			gomega.Expect(spec.Backend.Type).To(gomega.Equal(consolev1.Service))
+			gomega.Expect(spec.Backend.Service).NotTo(gomega.BeNil())
+			gomega.Expect(spec.Backend.Service.Name).To(gomega.Equal(ConsoleUIServiceName))
+			gomega.Expect(spec.Backend.Service.Namespace).To(gomega.Equal(testNamespace))
+			gomega.Expect(spec.Backend.Service.Port).To(gomega.Equal(ConsoleUIHTTPSPort))
 		})
 
-		It("should have proxy to lightspeed app server", func() {
-			Expect(spec.Proxy).To(HaveLen(1))
+		ginkgo.It("should have proxy to lightspeed app server", func() {
+			gomega.Expect(spec.Proxy).To(gomega.HaveLen(1))
 			proxy := spec.Proxy[0]
-			Expect(proxy.Alias).To(Equal(ConsoleProxyAlias))
-			Expect(proxy.Authorization).To(Equal(consolev1.UserToken))
-			Expect(proxy.Endpoint.Type).To(Equal(consolev1.ProxyTypeService))
-			Expect(proxy.Endpoint.Service).NotTo(BeNil())
-			Expect(proxy.Endpoint.Service.Name).To(Equal(OpenStackLightspeedAppServerServiceName))
-			Expect(proxy.Endpoint.Service.Namespace).To(Equal(testNamespace))
-			Expect(proxy.Endpoint.Service.Port).To(Equal(int32(OpenStackLightspeedAppServerServicePort)))
+			gomega.Expect(proxy.Alias).To(gomega.Equal(ConsoleProxyAlias))
+			gomega.Expect(proxy.Authorization).To(gomega.Equal(consolev1.UserToken))
+			gomega.Expect(proxy.Endpoint.Type).To(gomega.Equal(consolev1.ProxyTypeService))
+			gomega.Expect(proxy.Endpoint.Service).NotTo(gomega.BeNil())
+			gomega.Expect(proxy.Endpoint.Service.Name).To(gomega.Equal(OpenStackLightspeedAppServerServiceName))
+			gomega.Expect(proxy.Endpoint.Service.Namespace).To(gomega.Equal(testNamespace))
+			gomega.Expect(proxy.Endpoint.Service.Port).To(gomega.Equal(int32(OpenStackLightspeedAppServerServicePort)))
 		})
 
-		It("should have display name and i18n", func() {
-			Expect(spec.DisplayName).To(Equal("Lightspeed Console Plugin"))
-			Expect(spec.I18n.LoadType).To(Equal(consolev1.Preload))
+		ginkgo.It("should have display name and i18n", func() {
+			gomega.Expect(spec.DisplayName).To(gomega.Equal("Lightspeed Console Plugin"))
+			gomega.Expect(spec.I18n.LoadType).To(gomega.Equal(consolev1.Preload))
 		})
 	})
 
-	Describe("buildConsoleNginxConfig", func() {
-		It("should contain SSL listener on port 9443", func() {
+	ginkgo.Describe("buildConsoleNginxConfig", func() {
+		ginkgo.It("should contain SSL listener on port 9443", func() {
 			config := buildConsoleNginxConfig()
-			Expect(config).To(ContainSubstring("listen              9443 ssl"))
-			Expect(config).To(ContainSubstring("ssl_certificate     /var/cert/tls.crt"))
-			Expect(config).To(ContainSubstring("ssl_certificate_key /var/cert/tls.key"))
+			gomega.Expect(config).To(gomega.ContainSubstring("listen              9443 ssl"))
+			gomega.Expect(config).To(gomega.ContainSubstring("ssl_certificate     /var/cert/tls.crt"))
+			gomega.Expect(config).To(gomega.ContainSubstring("ssl_certificate_key /var/cert/tls.key"))
 		})
 	})
 
-	Describe("buildConsoleNetworkPolicySpec", func() {
+	ginkgo.Describe("buildConsoleNetworkPolicySpec", func() {
 		var spec = buildConsoleNetworkPolicySpec()
 
-		It("should select console plugin pods", func() {
-			Expect(spec.PodSelector.MatchLabels).To(Equal(generateConsoleSelectorLabels()))
+		ginkgo.It("should select console plugin pods", func() {
+			gomega.Expect(spec.PodSelector.MatchLabels).To(gomega.Equal(generateConsoleSelectorLabels()))
 		})
 
-		It("should allow ingress from openshift-console namespace", func() {
-			Expect(spec.Ingress).To(HaveLen(1))
-			Expect(spec.Ingress[0].From).To(HaveLen(1))
+		ginkgo.It("should allow ingress from openshift-console namespace", func() {
+			gomega.Expect(spec.Ingress).To(gomega.HaveLen(1))
+			gomega.Expect(spec.Ingress[0].From).To(gomega.HaveLen(1))
 			nsSelector := spec.Ingress[0].From[0].NamespaceSelector
-			Expect(nsSelector).NotTo(BeNil())
-			Expect(nsSelector.MatchLabels).To(HaveKeyWithValue("kubernetes.io/metadata.name", "openshift-console"))
+			gomega.Expect(nsSelector).NotTo(gomega.BeNil())
+			gomega.Expect(nsSelector.MatchLabels).To(gomega.HaveKeyWithValue("kubernetes.io/metadata.name", "openshift-console"))
 		})
 
-		It("should allow ingress on HTTPS port", func() {
-			Expect(spec.Ingress[0].Ports).To(HaveLen(1))
-			Expect(spec.Ingress[0].Ports[0].Port.IntVal).To(Equal(ConsoleUIHTTPSPort))
+		ginkgo.It("should allow ingress on HTTPS port", func() {
+			gomega.Expect(spec.Ingress[0].Ports).To(gomega.HaveLen(1))
+			gomega.Expect(spec.Ingress[0].Ports[0].Port.IntVal).To(gomega.Equal(ConsoleUIHTTPSPort))
 		})
 
-		It("should have ingress policy type", func() {
-			Expect(spec.PolicyTypes).To(ContainElement(
+		ginkgo.It("should have ingress policy type", func() {
+			gomega.Expect(spec.PolicyTypes).To(gomega.ContainElement(
 				networkingv1.PolicyTypeIngress,
 			))
 		})
 	})
 
-	Describe("consoleImageForVersion", func() {
-		It("should return PF5 image when version is empty", func() {
+	ginkgo.Describe("consoleImageForVersion", func() {
+		ginkgo.It("should return PF5 image when version is empty", func() {
 			result := consoleImageForVersion("")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
 		})
 
-		It("should return PF5 image for OCP 4.16", func() {
+		ginkgo.It("should return PF5 image for OCP 4.16", func() {
 			result := consoleImageForVersion("4.16")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
 		})
 
-		It("should return PF5 image for OCP 4.18", func() {
+		ginkgo.It("should return PF5 image for OCP 4.18", func() {
 			result := consoleImageForVersion("4.18")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
 		})
 
-		It("should return PF6 image for OCP 4.19", func() {
+		ginkgo.It("should return PF6 image for OCP 4.19", func() {
 			result := consoleImageForVersion("4.19")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL))
 		})
 
-		It("should return PF6 image for OCP 4.20", func() {
+		ginkgo.It("should return PF6 image for OCP 4.20", func() {
 			result := consoleImageForVersion("4.20")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL))
 		})
 
-		It("should return PF6 image for OCP 5.0", func() {
+		ginkgo.It("should return PF6 image for OCP 5.0", func() {
 			result := consoleImageForVersion("5.0")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL))
 		})
 
-		It("should return PF5 image for non-numeric version parts", func() {
+		ginkgo.It("should return PF5 image for non-numeric version parts", func() {
 			result := consoleImageForVersion("abc.def")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
 		})
 
-		It("should return PF5 image for single-part version string", func() {
+		ginkgo.It("should return PF5 image for single-part version string", func() {
 			result := consoleImageForVersion("4")
-			Expect(result).To(Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
+			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
 		})
 	})
 })

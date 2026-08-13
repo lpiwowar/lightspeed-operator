@@ -35,7 +35,7 @@ import (
 
 // buildLCorePodTemplateSpec builds the pod template spec for the LCore deployment.
 // This function is used by CreateOrPatch to generate the desired pod spec.
-func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) (corev1.PodTemplateSpec, error) {
+func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) (corev1.PodTemplateSpec, error) {
 	// Build shared volumes
 	volumes := []corev1.Volume{
 		buildOGXConfigVolume(VolumeDefaultMode),
@@ -53,7 +53,7 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 	addLlamaCacheVolumesAndMounts(&volumes, &llamaCacheMounts)
 
 	// Build env vars
-	llamaEnvVars, err := buildLlamaStackEnvVars(h, ctx, instance)
+	llamaEnvVars, err := buildLlamaStackEnvVars(ctx, h, instance)
 	if err != nil {
 		return corev1.PodTemplateSpec{}, fmt.Errorf("failed to build llama-stack env vars: %w", err)
 	}
@@ -223,7 +223,7 @@ func buildLCorePodTemplateSpec(h *common_helper.Helper, ctx context.Context, ins
 	}
 
 	// Build configmap resource version annotations for change detection
-	annotations, err := buildConfigMapAnnotations(h, ctx)
+	annotations, err := buildConfigMapAnnotations(ctx, h)
 	if err != nil {
 		return corev1.PodTemplateSpec{}, err
 	}
@@ -528,7 +528,7 @@ func addCABundleVolumesAndMounts(volumes *[]corev1.Volume, mounts *[]corev1.Volu
 
 // buildLlamaStackEnvVars builds environment variables for llama-stack,
 // primarily provider API keys read from Kubernetes secrets.
-func buildLlamaStackEnvVars(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) ([]corev1.EnvVar, error) {
+func buildLlamaStackEnvVars(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) ([]corev1.EnvVar, error) {
 	envVars := []corev1.EnvVar{}
 
 	{
@@ -781,7 +781,7 @@ func getOGXLogLevel(instance *apiv1beta1.OpenStackLightspeed) string {
 
 // buildConfigMapAnnotations builds annotations with configmap resource versions
 // so that changes to the configmaps trigger a deployment rollout.
-func buildConfigMapAnnotations(h *common_helper.Helper, ctx context.Context) (map[string]string, error) {
+func buildConfigMapAnnotations(ctx context.Context, h *common_helper.Helper) (map[string]string, error) {
 	annotations := make(map[string]string)
 
 	lcoreVersion, err := getConfigMapResourceVersion(ctx, h, LCoreConfigCmName, h.GetBeforeObject().GetNamespace())

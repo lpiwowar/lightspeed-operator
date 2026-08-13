@@ -25,7 +25,7 @@ import (
 )
 
 // ReconcileFunc is a function that reconciles a single lcore resource.
-type ReconcileFunc func(*common_helper.Helper, context.Context, *apiv1beta1.OpenStackLightspeed) error
+type ReconcileFunc func(context.Context, *common_helper.Helper, *apiv1beta1.OpenStackLightspeed) error
 
 // ReconcileTask pairs a task name with its reconcile function.
 type ReconcileTask struct {
@@ -36,13 +36,13 @@ type ReconcileTask struct {
 // ReconcileTasks executes a list of reconciliation tasks sequentially, logging
 // each failure but continuing through the remaining tasks. It returns the first
 // error encountered, wrapped with the failing task's name.
-func ReconcileTasks(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed, tasks []ReconcileTask) error {
+func ReconcileTasks(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed, tasks []ReconcileTask) error {
 	logger := h.GetLogger()
 	logger.Info("reconciling resources")
 
 	var firstErr error
 	for _, t := range tasks {
-		if err := t.Task(h, ctx, instance); err != nil {
+		if err := t.Task(ctx, h, instance); err != nil {
 			logger.Error(err, "failed to reconcile resource", "task", t.Name)
 			if firstErr == nil {
 				firstErr = fmt.Errorf("task %s: %w", t.Name, err)
@@ -62,9 +62,9 @@ func ReconcileTasks(h *common_helper.Helper, ctx context.Context, instance *apiv
 // stopping immediately at the first error encountered. This is useful for tasks
 // that have strict ordering dependencies where subsequent tasks cannot proceed
 // if earlier ones fail.
-func ReconcileTasksFailFast(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed, tasks []ReconcileTask) error {
+func ReconcileTasksFailFast(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed, tasks []ReconcileTask) error {
 	for _, t := range tasks {
-		if err := t.Task(h, ctx, instance); err != nil {
+		if err := t.Task(ctx, h, instance); err != nil {
 			return fmt.Errorf("task %s: %w", t.Name, err)
 		}
 	}
