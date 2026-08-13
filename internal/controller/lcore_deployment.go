@@ -700,6 +700,10 @@ func buildLightspeedStackEnvVars(instance *apiv1beta1.OpenStackLightspeed) []cor
 		Name:  "RH_SERVER_OKP",
 		Value: fmt.Sprintf("http://%s.%s.svc:%d", OKPServiceName, instance.GetNamespace(), OKPServicePort),
 	})
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "OTEL_SDK_DISABLED",
+		Value: "true",
+	})
 	envVars = append(envVars, buildPostgresCredsEnvVars()...)
 	return envVars
 }

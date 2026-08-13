@@ -274,6 +274,8 @@ spec:
               value: WARNING
             - name: RH_SERVER_OKP
               value: http://lightspeed-okp-server.openstack-lightspeed.svc:8080
+            - name: OTEL_SDK_DISABLED
+              value: "true"
             - name: POSTGRESQL_PASSWORD
               valueFrom:
                 secretKeyRef:
