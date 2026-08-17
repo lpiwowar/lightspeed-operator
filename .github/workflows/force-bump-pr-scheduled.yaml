@@ -7,7 +7,7 @@ on:
 jobs:
   call-build-workflow:
     if: github.ref == 'refs/heads/main' && github.repository_owner == 'openstack-k8s-operators'
-    uses: openstack-k8s-operators/openstack-k8s-operators-ci/.github/workflows/force-bump-branches.yaml@main
+    uses: openstack-k8s-operators/openstack-k8s-operators-ci/.github/workflows/force-bump-pull-request.yaml@main
     with:
       operator_name: lightspeed
       custom_image: quay.io/openstack-k8s-operators/openstack-k8s-operators-ci-build-tools:golang-1.26-sdk-1.42.3
