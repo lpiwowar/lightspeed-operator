@@ -36,7 +36,7 @@ const (
 	ExporterContainerImage = "quay.io/lightspeed-core/lightspeed-to-dataverse-exporter:latest"
 
 	// PostgresContainerImage is the fall-back container image for PostgreSQL
-	PostgresContainerImage = "registry.redhat.io/rhel9/postgresql-16:latest"
+	PostgresContainerImage = "quay.io/sclorg/postgresql-16-c10s:latest"
 
 	// ConsoleContainerImage is the fall-back container image for the Console Plugin (PatternFly 6, OCP >= 4.19)
 	ConsoleContainerImage = "registry.redhat.io/openshift-lightspeed/lightspeed-console-plugin-rhel9:1.0.12"
