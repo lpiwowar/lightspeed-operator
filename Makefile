@@ -163,8 +163,8 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 ##@ Security
 
 .PHONY: govulncheck
-govulncheck: govulncheck-install ## Run govulncheck vulnerability scanner.
-	GOTOOLCHAIN=auto $(GOVULNCHECK) ./...
+govulncheck: govulncheck-install ## Run govulncheck vulnerability scanner with ignore list.
+	@GOVULNCHECK_BIN="$(GOVULNCHECK)" ./hack/govulncheck-wrapper.sh
 
 ##@ Build
 
@@ -274,7 +274,7 @@ GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 KUSTOMIZE_VERSION ?= v5.4.2
 CONTROLLER_TOOLS_VERSION ?= v0.16.5
 ENVTEST_VERSION ?= release-0.22
-GOLANGCI_LINT_VERSION ?= v2.6.0
+GOLANGCI_LINT_VERSION ?= v2.12.2
 KUTTL_VERSION ?= 0.22.0
 GOVULNCHECK_VERSION ?= v1.6.0
 

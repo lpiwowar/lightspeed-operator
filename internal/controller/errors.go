@@ -19,55 +19,135 @@ package controller
 import "errors"
 
 var (
-	// Lcore Errors
-	ErrCreateAPIConfigmap           = errors.New("failed to create OpenStack Lightspeed configmap")
-	ErrCreateAPIDeployment          = errors.New("failed to create OpenStack Lightspeed deployment")
-	ErrCreateAPIService             = errors.New("failed to create OpenStack Lightspeed service")
-	ErrCreateAPIServiceAccount      = errors.New("failed to create OpenStack Lightspeed service account")
+	// ErrCreateAPIConfigmap is returned when OpenStack Lightspeed ConfigMap cannot be created.
+	ErrCreateAPIConfigmap = errors.New("failed to create OpenStack Lightspeed configmap")
+
+	// ErrCreateAPIDeployment is returned when OpenStack Lightspeed Deployment cannot be created.
+	ErrCreateAPIDeployment = errors.New("failed to create OpenStack Lightspeed deployment")
+
+	// ErrCreateAPIService is returned when OpenStack Lightspeed Service cannot be created.
+	ErrCreateAPIService = errors.New("failed to create OpenStack Lightspeed service")
+
+	// ErrCreateAPIServiceAccount is returned when OpenStack Lightspeed ServiceAccount cannot be created.
+	ErrCreateAPIServiceAccount = errors.New("failed to create OpenStack Lightspeed service account")
+
+	// ErrCreateAppServerNetworkPolicy is returned when the AppServer NetworkPolicy cannot be created.
 	ErrCreateAppServerNetworkPolicy = errors.New("failed to create AppServer network policy")
-	ErrCreateSARClusterRole         = errors.New("failed to create SAR cluster role")
-	ErrCreateSARClusterRoleBinding  = errors.New("failed to create SAR cluster role binding")
-	ErrDeleteSARClusterRole         = errors.New("failed to delete SAR cluster role")
-	ErrDeleteSARClusterRoleBinding  = errors.New("failed to delete SAR cluster role binding")
-	ErrGenerateAPIConfigmap         = errors.New("failed to generate OpenStack Lightspeed configmap")
-	ErrGetTLSSecret                 = errors.New("failed to get TLS secret")
-	ErrCreateLlamaStackConfigMap    = errors.New("failed to create Llama Stack configmap")
-	ErrGenerateLlamaStackConfigMap  = errors.New("failed to generate Llama Stack configmap")
-	ErrCreateExporterConfigMap      = errors.New("failed to create exporter configmap")
-	ErrReadSystemCABundle           = errors.New("failed to read system CA bundle")
-	ErrParseSystemCABundle          = errors.New("failed to parse system CA bundle")
-	ErrParseUserCA                  = errors.New("failed to parse user CA certificate")
-	ErrCreateCABundle               = errors.New("failed to create CA bundle configmap")
-	ErrGetCAConfigMap               = errors.New("failed to get CA configmap")
 
-	// Console Plugin Errors
-	ErrReconcileConsolePlugin     = errors.New("failed to reconcile console plugin")
+	// ErrCreateSARClusterRole is returned when the SAR ClusterRole cannot be created.
+	ErrCreateSARClusterRole = errors.New("failed to create SAR cluster role")
+
+	// ErrCreateSARClusterRoleBinding is returned when the SAR ClusterRoleBinding cannot be created.
+	ErrCreateSARClusterRoleBinding = errors.New("failed to create SAR cluster role binding")
+
+	// ErrDeleteSARClusterRole is returned when the SAR ClusterRole cannot be deleted.
+	ErrDeleteSARClusterRole = errors.New("failed to delete SAR cluster role")
+
+	// ErrDeleteSARClusterRoleBinding is returned when the SAR ClusterRoleBinding cannot be deleted.
+	ErrDeleteSARClusterRoleBinding = errors.New("failed to delete SAR cluster role binding")
+
+	// ErrGenerateAPIConfigmap is returned when the OpenStack Lightspeed ConfigMap cannot be generated.
+	ErrGenerateAPIConfigmap = errors.New("failed to generate OpenStack Lightspeed configmap")
+
+	// ErrGetTLSSecret is returned when the TLS Secret cannot be retrieved.
+	ErrGetTLSSecret = errors.New("failed to get TLS secret")
+
+	// ErrCreateLlamaStackConfigMap is returned when the Llama Stack ConfigMap cannot be created.
+	ErrCreateLlamaStackConfigMap = errors.New("failed to create Llama Stack configmap")
+
+	// ErrGenerateLlamaStackConfigMap is returned when the Llama Stack ConfigMap cannot be generated.
+	ErrGenerateLlamaStackConfigMap = errors.New("failed to generate Llama Stack configmap")
+
+	// ErrCreateExporterConfigMap is returned when the exporter ConfigMap cannot be created.
+	ErrCreateExporterConfigMap = errors.New("failed to create exporter configmap")
+
+	// ErrReadSystemCABundle is returned when the system CA bundle cannot be read.
+	ErrReadSystemCABundle = errors.New("failed to read system CA bundle")
+
+	// ErrParseSystemCABundle is returned when the system CA bundle cannot be parsed.
+	ErrParseSystemCABundle = errors.New("failed to parse system CA bundle")
+
+	// ErrParseUserCA is returned when the user CA certificate cannot be parsed.
+	ErrParseUserCA = errors.New("failed to parse user CA certificate")
+
+	// ErrCreateCABundle is returned when the CA bundle ConfigMap cannot be created.
+	ErrCreateCABundle = errors.New("failed to create CA bundle configmap")
+
+	// ErrGetCAConfigMap is returned when the CA ConfigMap cannot be retrieved.
+	ErrGetCAConfigMap = errors.New("failed to get CA configmap")
+
+	// ErrReconcileConsolePlugin is returned when the console plugin reconciliation fails.
+	ErrReconcileConsolePlugin = errors.New("failed to reconcile console plugin")
+
+	// ErrReconcileConsoleDeployment is returned when the console Deployment reconciliation fails.
 	ErrReconcileConsoleDeployment = errors.New("failed to reconcile console deployment")
-	ErrReconcileConsoleConfigMap  = errors.New("failed to reconcile console configmap")
-	ErrReconcileConsoleService    = errors.New("failed to reconcile console service")
-	ErrReconcileConsoleNetPolicy  = errors.New("failed to reconcile console network policy")
-	ErrReconcileConsoleSA         = errors.New("failed to reconcile console service account")
-	ErrReconcileConsoleTLSSecret  = errors.New("failed to reconcile console TLS secret")
-	ErrActivateConsolePlugin      = errors.New("failed to activate console plugin")
-	ErrDeactivateConsolePlugin    = errors.New("failed to deactivate console plugin")
-	ErrDeleteConsolePlugin        = errors.New("failed to delete console plugin")
 
-	// OKP Errors
+	// ErrReconcileConsoleConfigMap is returned when the console ConfigMap reconciliation fails.
+	ErrReconcileConsoleConfigMap = errors.New("failed to reconcile console configmap")
+
+	// ErrReconcileConsoleService is returned when the console Service reconciliation fails.
+	ErrReconcileConsoleService = errors.New("failed to reconcile console service")
+
+	// ErrReconcileConsoleNetPolicy is returned when the console NetworkPolicy reconciliation fails.
+	ErrReconcileConsoleNetPolicy = errors.New("failed to reconcile console network policy")
+
+	// ErrReconcileConsoleSA is returned when the console ServiceAccount reconciliation fails.
+	ErrReconcileConsoleSA = errors.New("failed to reconcile console service account")
+
+	// ErrReconcileConsoleTLSSecret is returned when the console TLS Secret reconciliation fails.
+	ErrReconcileConsoleTLSSecret = errors.New("failed to reconcile console TLS secret")
+
+	// ErrActivateConsolePlugin is returned when the console plugin cannot be activated.
+	ErrActivateConsolePlugin = errors.New("failed to activate console plugin")
+
+	// ErrDeactivateConsolePlugin is returned when the console plugin cannot be deactivated.
+	ErrDeactivateConsolePlugin = errors.New("failed to deactivate console plugin")
+
+	// ErrDeleteConsolePlugin is returned when the console plugin cannot be deleted.
+	ErrDeleteConsolePlugin = errors.New("failed to delete console plugin")
+
+	// ErrCreateOKPDeployment is returned when the OKP Deployment cannot be created.
 	ErrCreateOKPDeployment = errors.New("failed to create OKP deployment")
-	ErrCreateOKPService    = errors.New("failed to create OKP service")
 
-	// Postgres Errors
-	ErrCreatePostgresDeployment      = errors.New("failed to create Postgres deployment")
-	ErrCreatePostgresService         = errors.New("failed to create Postgres service")
-	ErrGeneratePostgresSecret        = errors.New("failed to generate Postgres secret")
-	ErrCreatePostgresSecret          = errors.New("failed to create Postgres secret")
-	ErrGetPostgresSecret             = errors.New("failed to get Postgres secret")
+	// ErrCreateOKPService is returned when the OKP Service cannot be created.
+	ErrCreateOKPService = errors.New("failed to create OKP service")
+
+	// ErrCreatePostgresDeployment is returned when the Postgres Deployment cannot be created.
+	ErrCreatePostgresDeployment = errors.New("failed to create Postgres deployment")
+
+	// ErrCreatePostgresService is returned when the Postgres Service cannot be created.
+	ErrCreatePostgresService = errors.New("failed to create Postgres service")
+
+	// ErrGeneratePostgresSecret is returned when the Postgres Secret cannot be generated.
+	ErrGeneratePostgresSecret = errors.New("failed to generate Postgres secret")
+
+	// ErrCreatePostgresSecret is returned when the Postgres Secret cannot be created.
+	ErrCreatePostgresSecret = errors.New("failed to create Postgres secret")
+
+	// ErrGetPostgresSecret is returned when the Postgres Secret cannot be retrieved.
+	ErrGetPostgresSecret = errors.New("failed to get Postgres secret")
+
+	// ErrCreatePostgresBootstrapSecret is returned when the Postgres bootstrap Secret cannot be created.
 	ErrCreatePostgresBootstrapSecret = errors.New("failed to create Postgres bootstrap secret")
-	ErrCreatePostgresConfigMap       = errors.New("failed to create Postgres configmap")
-	ErrGetPostgresConfigMap          = errors.New("failed to get Postgres configmap")
-	ErrCreatePostgresNetworkPolicy   = errors.New("failed to create Postgres network policy")
-	ErrCreatePostgresPVC             = errors.New("failed to create Postgres PVC")
-	ErrPatchPostgresPVC              = errors.New("failed to patch Postgres PVC")
-	ErrGetPostgresPVC                = errors.New("failed to get Postgres PVC")
-	ErrPostgresPVCSizeShrink         = errors.New("cannot shrink existing Postgres PVC")
+
+	// ErrCreatePostgresConfigMap is returned when the Postgres ConfigMap cannot be created.
+	ErrCreatePostgresConfigMap = errors.New("failed to create Postgres configmap")
+
+	// ErrGetPostgresConfigMap is returned when the Postgres ConfigMap cannot be retrieved.
+	ErrGetPostgresConfigMap = errors.New("failed to get Postgres configmap")
+
+	// ErrCreatePostgresNetworkPolicy is returned when the Postgres NetworkPolicy cannot be created.
+	ErrCreatePostgresNetworkPolicy = errors.New("failed to create Postgres network policy")
+
+	// ErrCreatePostgresPVC is returned when the Postgres PVC cannot be created.
+	ErrCreatePostgresPVC = errors.New("failed to create Postgres PVC")
+
+	// ErrPatchPostgresPVC is returned when the Postgres PVC cannot be patched.
+	ErrPatchPostgresPVC = errors.New("failed to patch Postgres PVC")
+
+	// ErrGetPostgresPVC is returned when the Postgres PVC cannot be retrieved.
+	ErrGetPostgresPVC = errors.New("failed to get Postgres PVC")
+
+	// ErrPostgresPVCSizeShrink is returned when an attempt is made to shrink an existing Postgres PVC.
+	ErrPostgresPVCSizeShrink = errors.New("cannot shrink existing Postgres PVC")
 )

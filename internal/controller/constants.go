@@ -17,15 +17,20 @@ limitations under the License.
 package controller
 
 import (
-	_ "embed"
+	_ "embed" // Required for go:embed directives in this package
 	"time"
 )
 
+// OpenStack Lightspeed Operator Constants
 const (
-	// Operator Settings
+	// -- Operator Settings ------------------------------------------------------
+
 	ResourceCreationTimeout = 60 * time.Second
 
-	// Application Server
+	// ---------------------------------------------------------------------------
+
+	// -- Application Server -----------------------------------------------------
+
 	OpenStackLightspeedAppServerServiceAccountName = "lightspeed-app-server"
 	OpenStackLightspeedAppServerSARRoleName        = OpenStackLightspeedAppServerServiceAccountName + "-sar-role"
 	OpenStackLightspeedAppServerSARRoleBindingName = OpenStackLightspeedAppServerSARRoleName + "-binding"
@@ -36,13 +41,19 @@ const (
 	OpenStackLightspeedDefaultProvider             = "openstack-lightspeed-provider"
 	OpenStackLightspeedVectorDBPath                = "/rag/vector_db/os_product_docs"
 
+	// ---------------------------------------------------------------------------
+
 	ServingCertSecretAnnotationKey = "service.beta.openshift.io/serving-cert-secret-name" // #nosec G101 -- annotation key, not a credential
 
-	// Monitoring
+	// -- Monitoring -------------------------------------------------------------
+
 	MetricsReaderServiceAccountTokenSecretName = "metrics-reader-token" // #nosec G101 -- Kubernetes Secret resource name, not a credential
 	MetricsReaderServiceAccountName            = "lightspeed-operator-metrics-reader"
 
-	// Postgres
+	// ---------------------------------------------------------------------------
+
+	// -- Postgres ---------------------------------------------------------------
+
 	PostgresDeploymentName                       = "lightspeed-postgres-server"
 	PostgresServiceName                          = "lightspeed-postgres-server"
 	PostgresSecretName                           = "lightspeed-postgres-secret"
@@ -69,17 +80,23 @@ const (
 	PostgresVarRunVolumeName                     = "lightspeed-postgres-var-run"
 	PostgresVarRunVolumeMountPath                = "/var/run/postgresql"
 
-	// Non-admin user that should be used by lightspeed-stack and llama-stack (OGX) to access
-	// the PostgreSQL database. This user gets created by the PostgreSQL container by setting
-	// the POSTGRESQL_USER and POSTGRESQL_PASSWORD environment variable.
+	// PostgresSQLUsername is non-admin user that should be used by lightspeed-stack and
+	// llama-stack (OGX) to access the PostgreSQL database. This user gets created by the
+	// PostgreSQL container by setting the POSTGRESQL_USER and POSTGRESQL_PASSWORD environment
+	// variable.
 	PostgresSQLUsername = "lightspeed-app-user"
+
+	// ---------------------------------------------------------------------------
 
 	TmpVolumeName      = "tmp-writable-volume"
 	TmpVolumeMountPath = "/tmp"
-	// Health probe settings for the PostgreSQL container.
+
+	// -- Health probe settings for the PostgreSQL container. --------------------
+
 	// Startup probe allows up to 300s for initialization (e.g. WAL recovery).
 	// Liveness uses a longer period/timeout to avoid killing a busy-but-healthy instance.
 	// Readiness uses a shorter period to quickly pull the pod from traffic when not accepting connections.
+
 	PostgresStartupProbeInitialDelaySeconds = int32(5)
 	PostgresStartupProbePeriodSeconds       = int32(10)
 	PostgresStartupProbeTimeoutSeconds      = int32(5)
@@ -91,7 +108,10 @@ const (
 	PostgresReadinessProbeTimeoutSeconds    = int32(5)
 	PostgresReadinessProbeFailureThreshold  = int32(3)
 
-	// LCore specific
+	// ---------------------------------------------------------------------------
+
+	// -- LCore specific ---------------------------------------------------------
+
 	LlamaStackContainerPort  = int32(8321)
 	LlamaStackConfigCmName   = "llama-stack-config"
 	LCoreConfigCmName        = "lightspeed-stack-config"
@@ -99,18 +119,27 @@ const (
 	LCoreConfigMountPath     = "/app-root/lightspeed-stack.yaml"
 	LCoreUserDataMountPath   = "/tmp/data"
 	ForceReloadAnnotationKey = "ols.openshift.io/force-reload"
-	// Health probe settings for the llama-stack/OGX container.
+
+	// ---------------------------------------------------------------------------
+
+	// -- Health probe settings for the llama-stack/OGX container. ---------------
+
 	// The startup probe allows up to 30 failures (300s) for the slow initialization,
 	// while liveness and readiness probes use a tighter threshold of 3 failures.
+
 	LlamaStackHealthPath                   = "/v1/health"
 	LlamaStackProbePeriodSeconds           = int32(10)
 	LlamaStackProbeTimeoutSeconds          = int32(5)
 	LlamaStackStartupProbeFailureThreshold = int32(30)
 	LlamaStackProbeFailureThreshold        = int32(3)
 
-	// Health probe settings for the lightspeed-stack container.
+	// ---------------------------------------------------------------------------
+
+	// -- Health probe settings for the lightspeed-stack container. --------------
+
 	// The startup probe allows up to 30 failures (300s) for initialization,
 	// while liveness and readiness probes use a tighter threshold of 3 failures.
+
 	LightspeedStackLivenessPath                 = "/liveness"
 	LightspeedStackReadinessPath                = "/readiness"
 	LightspeedStackProbePeriodSeconds           = int32(10)
@@ -118,13 +147,19 @@ const (
 	LightspeedStackStartupProbeFailureThreshold = int32(30)
 	LightspeedStackProbeFailureThreshold        = int32(3)
 
-	// Health probe settings for the rhoso-mcps container.
+	// ---------------------------------------------------------------------------
+
+	// -- Health probe settings for the rhoso-mcps container. --------------------
+
 	MCPServerHealthPath            = "/health"
 	MCPServerProbePeriodSeconds    = int32(10)
 	MCPServerProbeTimeoutSeconds   = int32(5)
 	MCPServerProbeFailureThreshold = int32(3)
 
-	// Data Exporter
+	// ---------------------------------------------------------------------------
+
+	// -- Data Exporter ----------------------------------------------------------
+
 	ExporterConfigVolumeName       = "exporter-config"
 	ExporterConfigMountPath        = "/etc/config"
 	ExporterConfigFilename         = "config.yaml"
@@ -134,7 +169,10 @@ const (
 	RHOSOLightspeedOwnerIDLabel    = "openstack.org/lightspeed-owner-id"
 	ServiceIDRHOSO                 = "rhos-lightspeed"
 
-	// OKP (Offline Knowledge Portal)
+	// ---------------------------------------------------------------------------
+
+	// -- OKP (Offline Knowledge Portal) -----------------------------------------
+
 	OKPContainerName       = "okp"
 	OKPContainerPort       = int32(8080)
 	OKPDeploymentName      = "lightspeed-okp-server"
@@ -146,7 +184,10 @@ const (
 	OKPChunkFilterQueryFmt = "((product:*openstack* AND product_version:%s) OR (product:*openshift* AND product_version:%s))"
 	ExternalProvidersDir   = "/app-root/providers.d"
 
-	// Console Plugin
+	// ---------------------------------------------------------------------------
+
+	// -- Console Plugin ---------------------------------------------------------
+
 	ConsoleUIConfigMapName         = "lightspeed-console-plugin"
 	ConsoleUIServiceCertSecretName = "lightspeed-console-plugin-cert"
 	ConsoleUIServiceName           = "lightspeed-console-plugin"
@@ -158,8 +199,13 @@ const (
 	ConsoleProxyAlias              = "ols"
 	ConsoleUINetworkPolicyName     = "lightspeed-console-plugin"
 
-	// Provider name constants representing valid values for
-	// OpenStackLightpseed.Spec.LLMEndpointType (providers available to users)
+	// ---------------------------------------------------------------------------
+
+	// -- Provider name constants ------------------------------------------------
+
+	// These constants represent valid values for OpenStackLightspeed.Spec.LLMEndpointType
+	// (providers available to users)
+
 	RHELAIVLLMProviderName  = "rhelai_vllm"
 	RHOAIVLLMProviderName   = "rhoai_vllm"
 	GeminiProviderName      = "gemini"
@@ -167,17 +213,26 @@ const (
 	OpenAIProviderName      = "openai"
 	WatsonXProviderName     = "watsonx"
 
-	// OpenStack Control Plane
+	// ---------------------------------------------------------------------------
+
+	// -- OpenStack Control Plane ------------------------------------------------
+
 	OpenStackControlPlaneGroup   = "core.openstack.org"
 	OpenStackControlPlaneVersion = "v1beta1"
 	OpenStackControlPlaneKind    = "OpenStackControlPlane"
 
-	// Keystone Application Credential
+	// ---------------------------------------------------------------------------
+
+	// -- Keystone Application Credential ----------------------------------------
+
 	KeystoneApplicationCredentialGroup   = "keystone.openstack.org"
 	KeystoneApplicationCredentialVersion = "v1beta1"
 	KeystoneApplicationCredentialKind    = "KeystoneApplicationCredential"
 
-	// Lightspeed Service User in OpenStack created by the Keystone Application Credential
+	// ---------------------------------------------------------------------------
+
+	// LightspeedServiceUserName is Lightspeed Service User in OpenStack created by the
+	// Keystone Application Credential
 	LightspeedServiceUserName    = "lightspeed"
 	LightspeedServiceUserDomain  = "default"
 	LightspeedPasswordSecretName = "lightspeed-password"
@@ -263,10 +318,12 @@ const (
 	// that monkey-patches the asyncpg event loop bug fix. Remove with PR #5837 backport.
 	LlamaStartupWrapperKey = "llama_startup_wrapper.py" // #nosec G101 -- ConfigMap key, not a credential
 
-	// Resource Version Annotation
+	// -- Resource Version Annotation --------------------------------------------
+
 	// These constants define annotation keys used to track the resource versions of specific ConfigMaps.
 	// By recording the resource version of a ConfigMap in a Deployment, StatefulSet, or similar resource,
 	// changes to the referenced ConfigMaps can be detected and trigger rollouts or reconciliation in the operator.
+
 	PostgresConfigMapResourceVersionAnnotation   = "ols.openshift.io/postgres-configmap-version"
 	PostgresSecretResourceVersionAnnotation      = "ols.openshift.io/postgres-secret-version" // #nosec G101 -- annotation key, not a credential
 	VectorDBScriptsConfigMapVersionAnnotation    = "ols.openshift.io/vector-db-scripts-configmap-version"
@@ -278,11 +335,17 @@ const (
 	SecureYAMLSecretVersionAnnotation            = "ols.openshift.io/secure-yaml-secret-version"        // #nosec G101 -- annotation key, not a credential
 	CombinedCABundleSecretVersionAnnotation      = "ols.openshift.io/combined-ca-bundle-secret-version" // #nosec G101 -- annotation key, not a credential
 
-	// Volume Permissions
+	// ---------------------------------------------------------------------------
+
+	// -- Volume Permissions -----------------------------------------------------
+
 	// These constants define file permissions for volumes mounted in containers.
+
 	VolumeDefaultMode    = int32(420)
 	VolumeRestrictedMode = int32(0600)
 	VolumeExecutableMode = int32(0755)
+
+	// ---------------------------------------------------------------------------
 
 	// CABundleConfigMapName is the name of the ConfigMap that stores the
 	// CA certificate bundle. It aggregates certificates from three sources —
@@ -354,12 +417,13 @@ const (
 	OpenStackLightspeedChecksumAnnotation = "openstack.org/checksum"
 )
 
-// PostgreSQL Bootstrap Script - creates database, extensions, and schemas
+// PostgresBootStrapScriptContent is shell script that creates database, extensions, and schemas
+// (calls PostgresBootStrapSQLContent under the hood)
 //
 //go:embed assets/postgres_bootstrap.sh
 var PostgresBootStrapScriptContent string
 
-// PostgreSQL Bootstrap SQL - creates database, extensions, and schemas
+// PostgresBootStrapSQLContent is SQL script that creates database, extensions, and schemas
 //
 //go:embed assets/postgres_bootstrap.sql
 var PostgresBootStrapSQLContent string

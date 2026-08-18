@@ -31,3 +31,6 @@ go.work.sum
 # Kuttl test files
 kubeconfig
 kuttl-report-openstack-lightspeed.xml
+
+# Vulnerability scan output
+vuln_output.json

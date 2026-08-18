@@ -30,15 +30,15 @@ import (
 )
 
 // ReconcileOKPDeployment reconciles the OKP Deployment and Service.
-func ReconcileOKPDeployment(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func ReconcileOKPDeployment(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	tasks := []ReconcileTask{
 		{Name: "OKPDeployment", Task: reconcileOKPDeployment},
 		{Name: "OKPService", Task: reconcileOKPService},
 	}
-	return ReconcileTasksFailFast(h, ctx, instance, tasks)
+	return ReconcileTasksFailFast(ctx, h, instance, tasks)
 }
 
-func reconcileOKPDeployment(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileOKPDeployment(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	deployment := &appsv1.Deployment{
@@ -62,14 +62,14 @@ func reconcileOKPDeployment(h *common_helper.Helper, ctx context.Context, instan
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateOKPDeployment, err)
+		return fmt.Errorf("%w: %w", ErrCreateOKPDeployment, err)
 	}
 
 	logger.Info("OKP Deployment reconciled", "name", deployment.Name, "result", result)
 	return nil
 }
 
-func reconcileOKPService(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileOKPService(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	svc := &corev1.Service{
@@ -95,7 +95,7 @@ func reconcileOKPService(h *common_helper.Helper, ctx context.Context, _ *apiv1b
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateOKPService, err)
+		return fmt.Errorf("%w: %w", ErrCreateOKPService, err)
 	}
 
 	logger.Info("OKP Service reconciled", "name", svc.Name, "result", result)

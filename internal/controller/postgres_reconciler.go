@@ -56,7 +56,7 @@ func buildPostgresConfig(instance *apiv1beta1.OpenStackLightspeed) (string, erro
 // ReconcilePostgresResources reconciles Postgres prerequisite resources (Phase 1):
 // ConfigMap, Bootstrap Secret, Password Secret, and Network Policy.
 // Uses continue-on-error pattern to attempt all resources even if some fail.
-func ReconcilePostgresResources(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func ReconcilePostgresResources(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	tasks := []ReconcileTask{
 		{Name: "PostgresConfigMap", Task: reconcilePostgresConfigMap},
 		{Name: "PostgresBootstrapSecret", Task: reconcilePostgresBootstrapSecret},
@@ -64,22 +64,22 @@ func ReconcilePostgresResources(h *common_helper.Helper, ctx context.Context, in
 		{Name: "PostgresNetworkPolicy", Task: reconcilePostgresNetworkPolicy},
 	}
 
-	return ReconcileTasks(h, ctx, instance, tasks)
+	return ReconcileTasks(ctx, h, instance, tasks)
 }
 
 // ReconcilePostgresDeployment reconciles the Postgres Deployment and Service (Phase 2).
 // Uses fail-fast pattern where the first error stops execution.
-func ReconcilePostgresDeployment(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func ReconcilePostgresDeployment(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	tasks := []ReconcileTask{
 		{Name: "PostgresPVC", Task: reconcilePostgresPVC},
 		{Name: "PostgresDeployment", Task: reconcilePostgresDeploymentTask},
 		{Name: "PostgresService", Task: reconcilePostgresServiceTask},
 	}
 
-	return ReconcileTasksFailFast(h, ctx, instance, tasks)
+	return ReconcileTasksFailFast(ctx, h, instance, tasks)
 }
 
-func reconcilePostgresConfigMap(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresConfigMap(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      PostgresConfigMapName,
@@ -100,14 +100,14 @@ func reconcilePostgresConfigMap(h *common_helper.Helper, ctx context.Context, in
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreatePostgresConfigMap, err)
+		return fmt.Errorf("%w: %w", ErrCreatePostgresConfigMap, err)
 	}
 
 	h.GetLogger().Info("Postgres ConfigMap reconciled", "name", cm.Name, "result", result)
 	return nil
 }
 
-func reconcilePostgresBootstrapSecret(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresBootstrapSecret(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      PostgresBootstrapSecretName,
@@ -125,14 +125,14 @@ func reconcilePostgresBootstrapSecret(h *common_helper.Helper, ctx context.Conte
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreatePostgresBootstrapSecret, err)
+		return fmt.Errorf("%w: %w", ErrCreatePostgresBootstrapSecret, err)
 	}
 
 	h.GetLogger().Info("Postgres bootstrap secret reconciled", "name", secret.Name, "result", result)
 	return nil
 }
 
-func reconcilePostgresSecret(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresSecret(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	// Check if secret exists - if not, cleanup old secrets first
 	checkSecret := &corev1.Secret{}
 	secretKey := client.ObjectKey{
@@ -142,11 +142,11 @@ func reconcilePostgresSecret(h *common_helper.Helper, ctx context.Context, _ *ap
 	err := h.GetClient().Get(ctx, secretKey, checkSecret)
 	if errors.IsNotFound(err) {
 		// Delete any old postgres secrets before creating a new one
-		if err := deleteOldPostgresSecrets(h, ctx); err != nil {
+		if err := deleteOldPostgresSecrets(ctx, h); err != nil {
 			return err
 		}
 	} else if err != nil {
-		return fmt.Errorf("%w: %v", ErrGetPostgresSecret, err)
+		return fmt.Errorf("%w: %w", ErrGetPostgresSecret, err)
 	}
 
 	secret := &corev1.Secret{
@@ -166,7 +166,7 @@ func reconcilePostgresSecret(h *common_helper.Helper, ctx context.Context, _ *ap
 			const PostgreSQLPasswordLen = 32
 			password, err := generateRandomString(PostgreSQLPasswordLen)
 			if err != nil {
-				return fmt.Errorf("%w: %v", ErrGeneratePostgresSecret, err)
+				return fmt.Errorf("%w: %w", ErrGeneratePostgresSecret, err)
 			}
 
 			secret.Data[OpenStackLightspeedComponentPasswordFileName] = []byte(password)
@@ -177,14 +177,14 @@ func reconcilePostgresSecret(h *common_helper.Helper, ctx context.Context, _ *ap
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreatePostgresSecret, err)
+		return fmt.Errorf("%w: %w", ErrCreatePostgresSecret, err)
 	}
 
 	h.GetLogger().Info("Postgres secret reconciled", "name", secret.Name, "result", result)
 	return nil
 }
 
-func deleteOldPostgresSecrets(h *common_helper.Helper, ctx context.Context) error {
+func deleteOldPostgresSecrets(ctx context.Context, h *common_helper.Helper) error {
 	labelSelector := labels.Set{"app.kubernetes.io/name": "lightspeed-service-postgres"}.AsSelector()
 	matchingLabels := client.MatchingLabelsSelector{Selector: labelSelector}
 	deleteOptions := &client.DeleteAllOfOptions{
@@ -199,7 +199,7 @@ func deleteOldPostgresSecrets(h *common_helper.Helper, ctx context.Context) erro
 	return nil
 }
 
-func reconcilePostgresNetworkPolicy(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresNetworkPolicy(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	np := &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      PostgresNetworkPolicyName,
@@ -240,14 +240,14 @@ func reconcilePostgresNetworkPolicy(h *common_helper.Helper, ctx context.Context
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreatePostgresNetworkPolicy, err)
+		return fmt.Errorf("%w: %w", ErrCreatePostgresNetworkPolicy, err)
 	}
 
 	h.GetLogger().Info("Postgres NetworkPolicy reconciled", "name", np.Name, "result", result)
 	return nil
 }
 
-func reconcilePostgresPVC(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresPVC(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	requestedQty := resource.MustParse(PostgresDataPVCDefaultSize)
 	var storageClass string
 	if instance.Spec.Database != nil {
@@ -265,7 +265,7 @@ func reconcilePostgresPVC(h *common_helper.Helper, ctx context.Context, instance
 
 	err := h.GetClient().Get(ctx, pvcKey, pvc)
 	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("%w: %v", ErrGetPostgresPVC, err)
+		return fmt.Errorf("%w: %w", ErrGetPostgresPVC, err)
 	}
 
 	if err == nil {
@@ -310,14 +310,14 @@ func reconcilePostgresPVC(h *common_helper.Helper, ctx context.Context, instance
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreatePostgresPVC, err)
+		return fmt.Errorf("%w: %w", ErrCreatePostgresPVC, err)
 	}
 
 	h.GetLogger().Info("Postgres PVC reconciled", "name", pvc.Name, "result", result)
 	return nil
 }
 
-func reconcilePostgresDeploymentTask(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresDeploymentTask(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      PostgresDeploymentName,
@@ -328,12 +328,12 @@ func reconcilePostgresDeploymentTask(h *common_helper.Helper, ctx context.Contex
 	result, err := controllerutil.CreateOrPatch(ctx, h.GetClient(), deployment, func() error {
 		currentConfigMapVersion, err := getConfigMapResourceVersion(ctx, h, PostgresConfigMapName, h.GetBeforeObject().GetNamespace())
 		if err != nil && !errors.IsNotFound(err) {
-			return fmt.Errorf("%w: %v", ErrGetPostgresConfigMap, err)
+			return fmt.Errorf("%w: %w", ErrGetPostgresConfigMap, err)
 		}
 
 		currentSecretVersion, err := getSecretResourceVersion(ctx, h, PostgresSecretName, h.GetBeforeObject().GetNamespace())
 		if err != nil && !errors.IsNotFound(err) {
-			return fmt.Errorf("%w: %v", ErrGetPostgresSecret, err)
+			return fmt.Errorf("%w: %w", ErrGetPostgresSecret, err)
 		}
 
 		// Build the desired deployment pod spec
@@ -366,14 +366,14 @@ func reconcilePostgresDeploymentTask(h *common_helper.Helper, ctx context.Contex
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreatePostgresDeployment, err)
+		return fmt.Errorf("%w: %w", ErrCreatePostgresDeployment, err)
 	}
 
 	h.GetLogger().Info("Postgres Deployment reconciled", "name", deployment.Name, "result", result)
 	return nil
 }
 
-func reconcilePostgresServiceTask(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcilePostgresServiceTask(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      PostgresServiceName,
@@ -405,7 +405,7 @@ func reconcilePostgresServiceTask(h *common_helper.Helper, ctx context.Context, 
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreatePostgresService, err)
+		return fmt.Errorf("%w: %w", ErrCreatePostgresService, err)
 	}
 
 	h.GetLogger().Info("Postgres Service reconciled", "name", svc.Name, "result", result)

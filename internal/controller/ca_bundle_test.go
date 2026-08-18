@@ -473,7 +473,7 @@ func TestReconcileCABundle_MergesServiceCA(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	err := reconcileCABundleConfigMap(h, ctx, instance)
+	err := reconcileCABundleConfigMap(ctx, h, instance)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -526,7 +526,7 @@ func TestReconcileCABundle_FailsWithoutServiceCA(t *testing.T) {
 		},
 	}
 
-	err := reconcileCABundleConfigMap(h, context.Background(), instance)
+	err := reconcileCABundleConfigMap(context.Background(), h, instance)
 	if err == nil {
 		t.Fatal("expected error when service CA ConfigMap is missing, got nil")
 	}
@@ -564,7 +564,7 @@ func TestReconcileCABundle_FailsWithoutKubeRootCA(t *testing.T) {
 		},
 	}
 
-	err := reconcileCABundleConfigMap(h, context.Background(), instance)
+	err := reconcileCABundleConfigMap(context.Background(), h, instance)
 	if err == nil {
 		t.Fatal("expected error when kube root CA ConfigMap is missing, got nil")
 	}
@@ -613,7 +613,7 @@ func TestReconcileCABundle_DeduplicatesAcrossSources(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	err := reconcileCABundleConfigMap(h, ctx, instance)
+	err := reconcileCABundleConfigMap(ctx, h, instance)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

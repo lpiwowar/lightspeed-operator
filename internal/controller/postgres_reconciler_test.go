@@ -71,7 +71,7 @@ func TestReconcilePostgresPVC_Expand(t *testing.T) {
 	instance := makeInstanceWithDBSize("2Gi")
 
 	ctx := context.Background()
-	if err := reconcilePostgresPVC(h, ctx, instance); err != nil {
+	if err := reconcilePostgresPVC(ctx, h, instance); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -92,7 +92,7 @@ func TestReconcilePostgresPVC_Shrink(t *testing.T) {
 	instance := makeInstanceWithDBSize("1Gi")
 
 	ctx := context.Background()
-	err := reconcilePostgresPVC(h, ctx, instance)
+	err := reconcilePostgresPVC(ctx, h, instance)
 	if err == nil {
 		t.Fatal("expected error when shrinking PVC, got nil")
 	}
@@ -107,7 +107,7 @@ func TestReconcilePostgresPVC_NoOp(t *testing.T) {
 	instance := makeInstanceWithDBSize("1Gi")
 
 	ctx := context.Background()
-	if err := reconcilePostgresPVC(h, ctx, instance); err != nil {
+	if err := reconcilePostgresPVC(ctx, h, instance); err != nil {
 		t.Fatalf("unexpected error for matching size: %v", err)
 	}
 }
@@ -151,7 +151,7 @@ func TestReconcilePostgresPVC_PatchError(t *testing.T) {
 	instance := makeInstanceWithDBSize("2Gi")
 
 	ctx := context.Background()
-	err := reconcilePostgresPVC(h, ctx, instance)
+	err := reconcilePostgresPVC(ctx, h, instance)
 	if err == nil {
 		t.Fatal("expected error when patch fails, got nil")
 	}

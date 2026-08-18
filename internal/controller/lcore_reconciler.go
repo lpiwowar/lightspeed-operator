@@ -39,7 +39,7 @@ import (
 // ReconcileLCoreResources reconciles Phase 1 resources: service accounts, roles,
 // config maps, secrets, and network policies. Uses a continue-on-error pattern
 // so that all tasks are attempted even if some fail.
-func ReconcileLCoreResources(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func ReconcileLCoreResources(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	tasks := []ReconcileTask{
 		{Name: "ServiceAccount", Task: reconcileServiceAccount},
 		{Name: "SARRole", Task: reconcileSARRole},
@@ -53,24 +53,24 @@ func ReconcileLCoreResources(h *common_helper.Helper, ctx context.Context, insta
 		{Name: "NetworkPolicy", Task: reconcileNetworkPolicy},
 	}
 
-	return ReconcileTasks(h, ctx, instance, tasks)
+	return ReconcileTasks(ctx, h, instance, tasks)
 }
 
 // ReconcileLCoreDeployment reconciles Phase 2 resources: deployment, service,
 // TLS secret, service monitor, and prometheus rule. Uses a fail-fast pattern
 // where the first error stops execution.
-func ReconcileLCoreDeployment(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func ReconcileLCoreDeployment(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	tasks := []ReconcileTask{
 		{Name: "Deployment", Task: reconcileDeployment},
 		{Name: "Service", Task: reconcileService},
 		{Name: "TLSSecret", Task: reconcileTLSSecret},
 	}
 
-	return ReconcileTasksFailFast(h, ctx, instance, tasks)
+	return ReconcileTasksFailFast(ctx, h, instance, tasks)
 }
 
 // reconcileServiceAccount ensures the OpenStack Lightspeed app server service account exists.
-func reconcileServiceAccount(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileServiceAccount(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	sa := &corev1.ServiceAccount{
@@ -86,7 +86,7 @@ func reconcileServiceAccount(h *common_helper.Helper, ctx context.Context, insta
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateAPIServiceAccount, err)
+		return fmt.Errorf("%w: %w", ErrCreateAPIServiceAccount, err)
 	}
 
 	logger.Info("ServiceAccount reconciled", "name", sa.Name, "result", result)
@@ -94,7 +94,7 @@ func reconcileServiceAccount(h *common_helper.Helper, ctx context.Context, insta
 }
 
 // reconcileSARRole ensures the SAR cluster role exists.
-func reconcileSARRole(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileSARRole(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	role := &rbacv1.ClusterRole{
@@ -134,7 +134,7 @@ func reconcileSARRole(h *common_helper.Helper, ctx context.Context, instance *ap
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateSARClusterRole, err)
+		return fmt.Errorf("%w: %w", ErrCreateSARClusterRole, err)
 	}
 
 	logger.Info("SAR ClusterRole reconciled", "name", role.Name, "result", result)
@@ -142,7 +142,7 @@ func reconcileSARRole(h *common_helper.Helper, ctx context.Context, instance *ap
 }
 
 // reconcileSARRoleBinding ensures the SAR cluster role binding exists.
-func reconcileSARRoleBinding(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileSARRoleBinding(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	rb := &rbacv1.ClusterRoleBinding{
@@ -171,7 +171,7 @@ func reconcileSARRoleBinding(h *common_helper.Helper, ctx context.Context, insta
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateSARClusterRoleBinding, err)
+		return fmt.Errorf("%w: %w", ErrCreateSARClusterRoleBinding, err)
 	}
 
 	logger.Info("SAR ClusterRoleBinding reconciled", "name", rb.Name, "result", result)
@@ -179,13 +179,13 @@ func reconcileSARRoleBinding(h *common_helper.Helper, ctx context.Context, insta
 }
 
 // reconcileLlamaStackConfigMap ensures the Llama Stack config map exists and is up to date.
-func reconcileLlamaStackConfigMap(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileLlamaStackConfigMap(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	// Build the YAML data
-	yamlData, err := buildLlamaStackYAML(h, ctx, instance)
+	yamlData, err := buildLlamaStackYAML(ctx, h, instance)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrGenerateLlamaStackConfigMap, err)
+		return fmt.Errorf("%w: %w", ErrGenerateLlamaStackConfigMap, err)
 	}
 
 	cm := &corev1.ConfigMap{
@@ -205,7 +205,7 @@ func reconcileLlamaStackConfigMap(h *common_helper.Helper, ctx context.Context, 
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateLlamaStackConfigMap, err)
+		return fmt.Errorf("%w: %w", ErrCreateLlamaStackConfigMap, err)
 	}
 
 	logger.Info("Llama Stack ConfigMap reconciled", "name", cm.Name, "result", result)
@@ -213,13 +213,13 @@ func reconcileLlamaStackConfigMap(h *common_helper.Helper, ctx context.Context, 
 }
 
 // reconcileLcoreConfigMap ensures the LCore config map exists and is up to date.
-func reconcileLcoreConfigMap(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileLcoreConfigMap(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	// Build the YAML data
 	yamlData, err := buildLCoreConfigYAML(ctx, h, instance)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrGenerateAPIConfigmap, err)
+		return fmt.Errorf("%w: %w", ErrGenerateAPIConfigmap, err)
 	}
 
 	cm := &corev1.ConfigMap{
@@ -239,7 +239,7 @@ func reconcileLcoreConfigMap(h *common_helper.Helper, ctx context.Context, insta
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateAPIConfigmap, err)
+		return fmt.Errorf("%w: %w", ErrCreateAPIConfigmap, err)
 	}
 
 	logger.Info("LCore ConfigMap reconciled", "name", cm.Name, "result", result)
@@ -248,7 +248,7 @@ func reconcileLcoreConfigMap(h *common_helper.Helper, ctx context.Context, insta
 
 // reconcileExporterConfigMap ensures the dataverse exporter ConfigMap exists when data
 // collection is enabled, and deletes it when disabled.
-func reconcileExporterConfigMap(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileExporterConfigMap(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	if !isDataCollectionEnabled(instance) {
@@ -276,7 +276,7 @@ func reconcileExporterConfigMap(h *common_helper.Helper, ctx context.Context, in
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateExporterConfigMap, err)
+		return fmt.Errorf("%w: %w", ErrCreateExporterConfigMap, err)
 	}
 
 	logger.Info("Exporter ConfigMap reconciled", "name", cm.Name, "result", result)
@@ -284,7 +284,7 @@ func reconcileExporterConfigMap(h *common_helper.Helper, ctx context.Context, in
 }
 
 // reconcileVectorDBScriptsConfigMap ensures the Vector DB scripts config map exists and is up to date.
-func reconcileVectorDBScriptsConfigMap(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileVectorDBScriptsConfigMap(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -304,7 +304,7 @@ func reconcileVectorDBScriptsConfigMap(h *common_helper.Helper, ctx context.Cont
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to create vector DB scripts ConfigMap: %v", err)
+		return fmt.Errorf("failed to create vector DB scripts ConfigMap: %w", err)
 	}
 
 	logger.Info("Vector DB Scripts ConfigMap reconciled", "name", cm.Name, "result", result)
@@ -312,14 +312,14 @@ func reconcileVectorDBScriptsConfigMap(h *common_helper.Helper, ctx context.Cont
 }
 
 // reconcileProxyCAConfigMap is a no-op for the minimal mapping (no proxy config).
-func reconcileProxyCAConfigMap(h *common_helper.Helper, _ context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileProxyCAConfigMap(_ context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 	logger.Info("proxy CA configmap reconciliation skipped (no proxy config in minimal mapping)")
 	return nil
 }
 
 // reconcileNetworkPolicy ensures the app server network policy exists and is up to date.
-func reconcileNetworkPolicy(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileNetworkPolicy(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	np := &networkingv1.NetworkPolicy{
@@ -354,7 +354,7 @@ func reconcileNetworkPolicy(h *common_helper.Helper, ctx context.Context, instan
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateAppServerNetworkPolicy, err)
+		return fmt.Errorf("%w: %w", ErrCreateAppServerNetworkPolicy, err)
 	}
 
 	logger.Info("App server NetworkPolicy reconciled", "name", np.Name, "result", result)
@@ -362,7 +362,7 @@ func reconcileNetworkPolicy(h *common_helper.Helper, ctx context.Context, instan
 }
 
 // reconcileDeployment ensures the LCore deployment exists and is up to date.
-func reconcileDeployment(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileDeployment(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	deployment := &appsv1.Deployment{
@@ -374,7 +374,7 @@ func reconcileDeployment(h *common_helper.Helper, ctx context.Context, instance 
 
 	result, err := controllerutil.CreateOrPatch(ctx, h.GetClient(), deployment, func() error {
 		// Build the desired pod template spec
-		podTemplateSpec, err := buildLCorePodTemplateSpec(h, ctx, instance)
+		podTemplateSpec, err := buildLCorePodTemplateSpec(ctx, h, instance)
 		if err != nil {
 			return err
 		}
@@ -392,7 +392,7 @@ func reconcileDeployment(h *common_helper.Helper, ctx context.Context, instance 
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateAPIDeployment, err)
+		return fmt.Errorf("%w: %w", ErrCreateAPIDeployment, err)
 	}
 
 	logger.Info("LCore Deployment reconciled", "name", deployment.Name, "result", result)
@@ -401,7 +401,7 @@ func reconcileDeployment(h *common_helper.Helper, ctx context.Context, instance 
 
 // reconcileService ensures the OpenStack Lightspeed app server service exists and is up to date.
 // Always uses the service-ca annotation for TLS certificate provisioning.
-func reconcileService(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileService(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	svc := &corev1.Service{
@@ -442,7 +442,7 @@ func reconcileService(h *common_helper.Helper, ctx context.Context, instance *ap
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateAPIService, err)
+		return fmt.Errorf("%w: %w", ErrCreateAPIService, err)
 	}
 
 	logger.Info("App server Service reconciled", "name", svc.Name, "result", result)
@@ -451,7 +451,7 @@ func reconcileService(h *common_helper.Helper, ctx context.Context, instance *ap
 
 // reconcileTLSSecret waits for the TLS secret to be populated by the service-ca
 // operator with tls.key and tls.crt data.
-func reconcileTLSSecret(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileTLSSecret(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 	logger.Info("waiting for TLS secret to be populated", "name", OpenStackLightspeedCertsSecretName)
 
@@ -473,7 +473,7 @@ func reconcileTLSSecret(h *common_helper.Helper, ctx context.Context, _ *apiv1be
 		return hasKey && hasCert, nil
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrGetTLSSecret, err)
+		return fmt.Errorf("%w: %w", ErrGetTLSSecret, err)
 	}
 
 	logger.Info("TLS secret is ready", "name", OpenStackLightspeedCertsSecretName)
@@ -481,7 +481,7 @@ func reconcileTLSSecret(h *common_helper.Helper, ctx context.Context, _ *apiv1be
 }
 
 // reconcileDeleteClusterRoleBindingByLabels deletes ClusterRoleBinding resources by labels.
-func reconcileDeleteClusterRoleBindingByLabels(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileDeleteClusterRoleBindingByLabels(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	labelSelector := labels.Set(generateAppServerSelectorLabels()).AsSelector()
@@ -493,7 +493,7 @@ func reconcileDeleteClusterRoleBindingByLabels(h *common_helper.Helper, ctx cont
 	}
 
 	if err := h.GetClient().DeleteAllOf(ctx, &rbacv1.ClusterRoleBinding{}, deleteOptions); err != nil {
-		return fmt.Errorf("%w: %v", ErrDeleteSARClusterRoleBinding, err)
+		return fmt.Errorf("%w: %w", ErrDeleteSARClusterRoleBinding, err)
 	}
 
 	logger.Info("SAR ClusterRoleBinding deleted successfully")
@@ -501,7 +501,7 @@ func reconcileDeleteClusterRoleBindingByLabels(h *common_helper.Helper, ctx cont
 }
 
 // reconcileDeleteClusterRoleByLabels deletes ClusterRole resources by labels.
-func reconcileDeleteClusterRoleByLabels(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileDeleteClusterRoleByLabels(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	labelSelector := labels.Set(generateAppServerSelectorLabels()).AsSelector()
@@ -513,7 +513,7 @@ func reconcileDeleteClusterRoleByLabels(h *common_helper.Helper, ctx context.Con
 	}
 
 	if err := h.GetClient().DeleteAllOf(ctx, &rbacv1.ClusterRole{}, deleteOptions); err != nil {
-		return fmt.Errorf("%w: %v", ErrDeleteSARClusterRole, err)
+		return fmt.Errorf("%w: %w", ErrDeleteSARClusterRole, err)
 	}
 
 	logger.Info("SAR ClusterRole deleted successfully")

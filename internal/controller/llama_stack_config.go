@@ -101,7 +101,7 @@ func buildLlamaStackAgentProviders(_ *common_helper.Helper, _ *apiv1beta1.OpenSt
 	}
 }
 
-func buildLlamaStackInferenceProviders(_ *common_helper.Helper, _ context.Context, instance *apiv1beta1.OpenStackLightspeed) ([]interface{}, error) {
+func buildLlamaStackInferenceProviders(_ context.Context, _ *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) ([]interface{}, error) {
 	// Always include sentence-transformers for embeddings
 	providers := []interface{}{
 		map[string]interface{}{
@@ -409,12 +409,12 @@ func buildLlamaStackToolGroups(_ *common_helper.Helper, _ *apiv1beta1.OpenStackL
 }
 
 // buildLlamaStackYAML assembles the complete Llama Stack configuration and converts to YAML
-func buildLlamaStackYAML(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) (string, error) {
+func buildLlamaStackYAML(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) (string, error) {
 	// Build the complete config as a map
 	config := buildLlamaStackCoreConfig(h, instance)
 
 	// Build inference providers with error handling
-	inferenceProviders, err := buildLlamaStackInferenceProviders(h, ctx, instance)
+	inferenceProviders, err := buildLlamaStackInferenceProviders(ctx, h, instance)
 	if err != nil {
 		return "", fmt.Errorf("failed to build inference providers: %w", err)
 	}

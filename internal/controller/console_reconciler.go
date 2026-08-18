@@ -44,19 +44,19 @@ import (
 
 // ReconcileConsoleResources reconciles Phase 1 console resources: ConfigMap (nginx),
 // NetworkPolicy, and ServiceAccount. Uses a continue-on-error pattern.
-func ReconcileConsoleResources(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func ReconcileConsoleResources(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	tasks := []ReconcileTask{
 		{Name: "ConsoleConfigMap", Task: reconcileConsoleConfigMap},
 		{Name: "ConsoleNetworkPolicy", Task: reconcileConsoleNetworkPolicy},
 		{Name: "ConsoleServiceAccount", Task: reconcileConsoleServiceAccount},
 	}
 
-	return ReconcileTasks(h, ctx, instance, tasks)
+	return ReconcileTasks(ctx, h, instance, tasks)
 }
 
 // ReconcileConsoleDeployment reconciles Phase 2 console resources: Deployment, Service,
 // TLS secret, ConsolePlugin, and console activation. Uses a fail-fast pattern.
-func ReconcileConsoleDeployment(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func ReconcileConsoleDeployment(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	tasks := []ReconcileTask{
 		{Name: "ConsoleDeployment", Task: reconcileConsoleDeploymentResource},
 		{Name: "ConsoleService", Task: reconcileConsoleService},
@@ -65,11 +65,11 @@ func ReconcileConsoleDeployment(h *common_helper.Helper, ctx context.Context, in
 		{Name: "ActivateConsole", Task: activateConsole},
 	}
 
-	return ReconcileTasksFailFast(h, ctx, instance, tasks)
+	return ReconcileTasksFailFast(ctx, h, instance, tasks)
 }
 
 // reconcileConsoleConfigMap ensures the console plugin nginx ConfigMap exists.
-func reconcileConsoleConfigMap(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileConsoleConfigMap(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	cm := &corev1.ConfigMap{
@@ -87,7 +87,7 @@ func reconcileConsoleConfigMap(h *common_helper.Helper, ctx context.Context, _ *
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReconcileConsoleConfigMap, err)
+		return fmt.Errorf("%w: %w", ErrReconcileConsoleConfigMap, err)
 	}
 
 	logger.Info("Console ConfigMap reconciled", "name", cm.Name, "result", result)
@@ -95,7 +95,7 @@ func reconcileConsoleConfigMap(h *common_helper.Helper, ctx context.Context, _ *
 }
 
 // reconcileConsoleNetworkPolicy ensures the console plugin network policy exists.
-func reconcileConsoleNetworkPolicy(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileConsoleNetworkPolicy(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	np := &networkingv1.NetworkPolicy{
@@ -111,7 +111,7 @@ func reconcileConsoleNetworkPolicy(h *common_helper.Helper, ctx context.Context,
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReconcileConsoleNetPolicy, err)
+		return fmt.Errorf("%w: %w", ErrReconcileConsoleNetPolicy, err)
 	}
 
 	logger.Info("Console NetworkPolicy reconciled", "name", np.Name, "result", result)
@@ -119,7 +119,7 @@ func reconcileConsoleNetworkPolicy(h *common_helper.Helper, ctx context.Context,
 }
 
 // reconcileConsoleServiceAccount ensures the console plugin service account exists.
-func reconcileConsoleServiceAccount(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileConsoleServiceAccount(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	sa := &corev1.ServiceAccount{
@@ -134,7 +134,7 @@ func reconcileConsoleServiceAccount(h *common_helper.Helper, ctx context.Context
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReconcileConsoleSA, err)
+		return fmt.Errorf("%w: %w", ErrReconcileConsoleSA, err)
 	}
 
 	logger.Info("Console ServiceAccount reconciled", "name", sa.Name, "result", result)
@@ -181,7 +181,7 @@ func resolveConsoleImage(ctx context.Context, h *common_helper.Helper) string {
 }
 
 // reconcileConsoleDeploymentResource ensures the console plugin deployment exists.
-func reconcileConsoleDeploymentResource(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileConsoleDeploymentResource(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	consoleImage := resolveConsoleImage(ctx, h)
@@ -202,7 +202,7 @@ func reconcileConsoleDeploymentResource(h *common_helper.Helper, ctx context.Con
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReconcileConsoleDeployment, err)
+		return fmt.Errorf("%w: %w", ErrReconcileConsoleDeployment, err)
 	}
 
 	logger.Info("Console Deployment reconciled", "name", deployment.Name, "result", result)
@@ -210,7 +210,7 @@ func reconcileConsoleDeploymentResource(h *common_helper.Helper, ctx context.Con
 }
 
 // reconcileConsoleService ensures the console plugin service exists.
-func reconcileConsoleService(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileConsoleService(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	svc := &corev1.Service{
@@ -241,7 +241,7 @@ func reconcileConsoleService(h *common_helper.Helper, ctx context.Context, _ *ap
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReconcileConsoleService, err)
+		return fmt.Errorf("%w: %w", ErrReconcileConsoleService, err)
 	}
 
 	logger.Info("Console Service reconciled", "name", svc.Name, "result", result)
@@ -250,7 +250,7 @@ func reconcileConsoleService(h *common_helper.Helper, ctx context.Context, _ *ap
 
 // reconcileConsoleTLSSecret waits for the console TLS secret to be populated by
 // the service-ca operator.
-func reconcileConsoleTLSSecret(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileConsoleTLSSecret(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 	logger.Info("waiting for console TLS secret", "name", ConsoleUIServiceCertSecretName)
 
@@ -272,7 +272,7 @@ func reconcileConsoleTLSSecret(h *common_helper.Helper, ctx context.Context, _ *
 		return hasKey && hasCert, nil
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReconcileConsoleTLSSecret, err)
+		return fmt.Errorf("%w: %w", ErrReconcileConsoleTLSSecret, err)
 	}
 
 	logger.Info("Console TLS secret is ready", "name", ConsoleUIServiceCertSecretName)
@@ -280,7 +280,7 @@ func reconcileConsoleTLSSecret(h *common_helper.Helper, ctx context.Context, _ *
 }
 
 // reconcileConsolePlugin ensures the ConsolePlugin CR exists.
-func reconcileConsolePlugin(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileConsolePlugin(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 	namespace := h.GetBeforeObject().GetNamespace()
 
@@ -297,7 +297,7 @@ func reconcileConsolePlugin(h *common_helper.Helper, ctx context.Context, _ *api
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReconcileConsolePlugin, err)
+		return fmt.Errorf("%w: %w", ErrReconcileConsolePlugin, err)
 	}
 
 	logger.Info("ConsolePlugin reconciled", "name", plugin.Name, "result", result)
@@ -305,7 +305,7 @@ func reconcileConsolePlugin(h *common_helper.Helper, ctx context.Context, _ *api
 }
 
 // activateConsole adds the console plugin to the Console CR's plugin list.
-func activateConsole(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func activateConsole(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
@@ -330,7 +330,7 @@ func activateConsole(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1
 		return h.GetClient().Update(ctx, console)
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrActivateConsolePlugin, err)
+		return fmt.Errorf("%w: %w", ErrActivateConsolePlugin, err)
 	}
 
 	logger.Info("Console plugin activated")
@@ -338,7 +338,7 @@ func activateConsole(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1
 }
 
 // reconcileDeleteConsole deactivates the console plugin and deletes the ConsolePlugin CR.
-func reconcileDeleteConsole(h *common_helper.Helper, ctx context.Context, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileDeleteConsole(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	// Deactivate: remove plugin from Console CR
@@ -350,7 +350,7 @@ func reconcileDeleteConsole(h *common_helper.Helper, ctx context.Context, _ *api
 				logger.Info("Console CR not found, skipping deactivation")
 				return nil
 			}
-			return fmt.Errorf("%w: %v", ErrDeactivateConsolePlugin, err)
+			return fmt.Errorf("%w: %w", ErrDeactivateConsolePlugin, err)
 		}
 
 		if console.Spec.Plugins == nil {
@@ -367,7 +367,7 @@ func reconcileDeleteConsole(h *common_helper.Helper, ctx context.Context, _ *api
 		return h.GetClient().Update(ctx, console)
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrDeactivateConsolePlugin, err)
+		return fmt.Errorf("%w: %w", ErrDeactivateConsolePlugin, err)
 	}
 	logger.Info("Console plugin deactivated")
 
@@ -379,12 +379,12 @@ func reconcileDeleteConsole(h *common_helper.Helper, ctx context.Context, _ *api
 			logger.Info("ConsolePlugin not found, skip deletion")
 			return nil
 		}
-		return fmt.Errorf("%w: %v", ErrDeleteConsolePlugin, err)
+		return fmt.Errorf("%w: %w", ErrDeleteConsolePlugin, err)
 	}
 
 	err = h.GetClient().Delete(ctx, plugin)
 	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("%w: %v", ErrDeleteConsolePlugin, err)
+		return fmt.Errorf("%w: %w", ErrDeleteConsolePlugin, err)
 	}
 
 	logger.Info("ConsolePlugin deleted")

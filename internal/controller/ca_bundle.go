@@ -121,7 +121,7 @@ func (cab *caBundle) encodePEM() []byte {
 
 // mergeCertsFromConfigMap reads the Data section of the given ConfigMap
 // and adds any valid certificate entries to the bundle.
-func (cab *caBundle) mergeCertsFromConfigMap(h *common_helper.Helper, ctx context.Context, cmName string) error {
+func (cab *caBundle) mergeCertsFromConfigMap(ctx context.Context, h *common_helper.Helper, cmName string) error {
 	cm := &corev1.ConfigMap{}
 	if err := h.GetClient().Get(ctx, client.ObjectKey{
 		Name:      cmName,
@@ -131,7 +131,7 @@ func (cab *caBundle) mergeCertsFromConfigMap(h *common_helper.Helper, ctx contex
 	}
 	for key, certData := range cm.Data {
 		if err := cab.getCertsFromPEM([]byte(certData)); err != nil {
-			return fmt.Errorf("%w: key %q in ConfigMap %q: %v", ErrParseUserCA, key, cmName, err)
+			return fmt.Errorf("%w: key %q in ConfigMap %q: %w", ErrParseUserCA, key, cmName, err)
 		}
 	}
 	return nil
@@ -141,17 +141,17 @@ func (cab *caBundle) mergeCertsFromConfigMap(h *common_helper.Helper, ctx contex
 // system CA certificates, a user-provided CA ConfigMap (if specified), as well as
 // the "kube-root-ca.crt" and "openshift-service-ca.crt" ConfigMaps. It then creates
 // or updates the managed ConfigMap, which is mounted into application pods.
-func reconcileCABundleConfigMap(h *common_helper.Helper, ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) error {
+func reconcileCABundleConfigMap(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 	bundle := &caBundle{}
 
 	systemCAs, err := getOperatorCABundle()
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrReadSystemCABundle, err)
+		return fmt.Errorf("%w: %w", ErrReadSystemCABundle, err)
 	}
 
 	if err := bundle.getCertsFromPEM(systemCAs); err != nil {
-		return fmt.Errorf("%w: %v", ErrParseSystemCABundle, err)
+		return fmt.Errorf("%w: %w", ErrParseSystemCABundle, err)
 	}
 
 	certsCMs := []string{OpenShiftServiceCAConfigMap, KubeRootCAConfigMap}
@@ -160,8 +160,8 @@ func reconcileCABundleConfigMap(h *common_helper.Helper, ctx context.Context, in
 	}
 
 	for _, certCM := range certsCMs {
-		if err := bundle.mergeCertsFromConfigMap(h, ctx, certCM); err != nil {
-			return fmt.Errorf("%w %q: %v", ErrGetCAConfigMap, certCM, err)
+		if err := bundle.mergeCertsFromConfigMap(ctx, h, certCM); err != nil {
+			return fmt.Errorf("%w %q: %w", ErrGetCAConfigMap, certCM, err)
 		}
 		logger.Info("CA certificates merged", "configmap", certCM)
 	}
@@ -182,7 +182,7 @@ func reconcileCABundleConfigMap(h *common_helper.Helper, ctx context.Context, in
 		return controllerutil.SetControllerReference(h.GetBeforeObject(), cm, h.GetScheme())
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateCABundle, err)
+		return fmt.Errorf("%w: %w", ErrCreateCABundle, err)
 	}
 
 	logger.Info("CA bundle ConfigMap reconciled", "name", cm.Name, "result", result, "certCount", len(bundle.certs))
