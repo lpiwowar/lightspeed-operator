@@ -179,6 +179,60 @@ func buildLCoreConversationCacheConfig(h *common_helper.Helper, _ *apiv1beta1.Op
 	}
 }
 
+// quotaLimiterTypeMapping maps CRD-facing limiter types to the literal values
+// matched exactly by lightspeed-stack's QuotaLimiterFactory.
+var quotaLimiterTypeMapping = map[string]string{
+	"userLimiter":    "user_limiter",
+	"clusterLimiter": "cluster_limiter",
+}
+
+// buildLCoreQuotaHandlersConfig configures quota enforcement (limiters, scheduler,
+// token history), backed by the operator-managed database instance. Returns nil
+// when no limiters are configured, keeping quota enforcement opt-in.
+func buildLCoreQuotaHandlersConfig(h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) map[string]interface{} {
+	quotas := instance.Spec.Quotas
+	if quotas == nil || len(quotas.Limiters) == 0 {
+		return nil
+	}
+
+	limiters := make([]interface{}, 0, len(quotas.Limiters))
+	for _, limiter := range quotas.Limiters {
+		limiters = append(limiters, map[string]interface{}{
+			"name":           limiter.Name,
+			"type":           quotaLimiterTypeMapping[limiter.Type],
+			"initial_quota":  limiter.InitialQuota,
+			"quota_increase": limiter.QuotaIncrease,
+			"period":         limiter.Period,
+		})
+	}
+
+	scheduler := &apiv1beta1.QuotaSchedulerSpec{Period: 5, DatabaseReconnectionCount: 10, DatabaseReconnectionDelay: 1}
+	if quotas.Scheduler != nil {
+		scheduler = quotas.Scheduler
+	}
+
+	return map[string]interface{}{
+		"postgres": map[string]interface{}{
+			"host":         PostgresServiceName + "." + h.GetBeforeObject().GetNamespace() + ".svc",
+			"port":         PostgresServicePort,
+			"db":           PostgresLightspeedStackDbName,
+			"user":         "${env.POSTGRESQL_USER}",
+			"password":     "${env.POSTGRESQL_PASSWORD}",
+			"ssl_mode":     PostgresDefaultSSLMode,
+			"gss_encmode":  "disable",
+			"ca_cert_path": CABundleMountPath,
+			"namespace":    "quota_handlers",
+		},
+		"limiters": limiters,
+		"scheduler": map[string]interface{}{
+			"period":                      scheduler.Period,
+			"database_reconnection_count": scheduler.DatabaseReconnectionCount,
+			"database_reconnection_delay": scheduler.DatabaseReconnectionDelay,
+		},
+		"enable_token_history": quotas.EnableTokenHistory,
+	}
+}
+
 // isDataCollectionEnabled returns true if at least one of feedback or transcripts is enabled.
 func isDataCollectionEnabled(instance *apiv1beta1.OpenStackLightspeed) bool {
 	return (instance.Spec.FeedbackEnabled == nil || *instance.Spec.FeedbackEnabled) || instance.Spec.TranscriptsEnabled
@@ -258,7 +312,7 @@ func buildLCoreMCPServersConfigIfEnabled(instance *apiv1beta1.OpenStackLightspee
 }
 
 // buildLCoreConfigYAML assembles the complete Lightspeed Core Service configuration and converts to YAML.
-// NOTE: quota handlers, and tools approval features are disabled for OpenStack Lightspeed.
+// NOTE: tools approval features are disabled for OpenStack Lightspeed.
 func buildLCoreConfigYAML(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) (string, error) {
 
 	ragInline := []interface{}{"okp"}
@@ -288,6 +342,10 @@ func buildLCoreConfigYAML(ctx context.Context, h *common_helper.Helper, instance
 	}
 
 	config["okp"] = buildOKPConfig(ctx, h, instance)
+
+	if quotaHandlers := buildLCoreQuotaHandlersConfig(h, instance); quotaHandlers != nil {
+		config["quota_handlers"] = quotaHandlers
+	}
 
 	// Convert to YAML
 	yamlBytes, err := yaml.Marshal(config)

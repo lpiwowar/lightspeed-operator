@@ -184,6 +184,10 @@ spec:
                 secretKeyRef:
                   key: username
                   name: lightspeed-postgres-secret
+            - name: PGSSLMODE
+              value: verify-full
+            - name: PGSSLROOTCERT
+              value: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
           volumeMounts:
             - name: ca-bundle
               mountPath: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem

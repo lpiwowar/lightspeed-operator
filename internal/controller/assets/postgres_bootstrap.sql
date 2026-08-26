@@ -10,6 +10,11 @@ GRANT CREATE ON DATABASE :"postgresql_lightspeed_stack_database" TO :"postgresql
 
 -- pg_trgm is the trigram similarity extension for PostgreSQL (enables e.g. fuzzy text search)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Unlike its cache/database backends, lightspeed-stack's quota module never
+-- issues CREATE SCHEMA before creating its tables under the configured
+-- namespace, so the "quota_handlers" schema must already exist.
+CREATE SCHEMA IF NOT EXISTS quota_handlers AUTHORIZATION :"postgresql_user";
 -------------------------------------------------------------------------------
 
 -- 2) LLAMA STACK DATABASE CONFIGURATION --------------------------------------

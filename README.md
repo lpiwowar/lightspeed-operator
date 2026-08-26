@@ -163,6 +163,50 @@ If you are running CRC on a different machine you can use `sshuttle` to connect 
 - In your local system run `sshuttle -r $remote_username@$remote_server 192.168.130.0/24`.
 - Now the console should be accessible in your browser.
 
+## Quota Enforcement
+
+OpenStack Lightspeed can enforce per-user and cluster-wide token quotas using
+`lightspeed-stack`'s built-in quota system. The operator manages quota storage
+automatically, so no extra setup is required.
+
+Quota enforcement is opt-in: it stays disabled until at least one limiter is
+configured. Add a `quotas` section to the `OpenStackLightspeed` spec:
+
+```yaml
+spec:
+  quotas:
+    limiters:
+      - name: per-user-hourly
+        type: userLimiter
+        initialQuota: 1000
+        quotaIncrease: 1000
+        period: "1 hour"
+      - name: cluster-daily
+        type: clusterLimiter
+        initialQuota: 100000
+        quotaIncrease: 100000
+        period: "1 day"
+    scheduler:
+      period: 10
+    enableTokenHistory: true
+```
+
+- `limiters[].type` is either `userLimiter` (per-user quota) or
+  `clusterLimiter` (cluster-wide quota).
+- `limiters[].period` must be an interval literal (e.g. `"30 seconds"`,
+  `"1 hour"`, `"1 day"`) controlling how often the limiter resets/increases.
+- `scheduler` (optional) tunes the background quota scheduler, the process
+  that periodically resets/increases limiter quotas and retries its database
+  connection on failure:
+  - `period`: how often, in seconds, the scheduler checks limiters for
+    reset/increase. Default `5`.
+  - `databaseReconnectionCount`: how many times the scheduler retries
+    connecting to the database before giving up. Default `10`.
+  - `databaseReconnectionDelay`: delay, in seconds, between database
+    reconnection attempts. Default `1`.
+- `enableTokenHistory: true` additionally records per-user/model/provider
+  token usage for auditing, with no effect on enforcement. Default `false`.
+
 ## Development
 
 If you are making changes to the operator you can run the operator locally

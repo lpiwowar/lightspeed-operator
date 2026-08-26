@@ -137,6 +137,72 @@ type ContainerResourcesSpec struct {
 	MCP corev1.ResourceRequirements `json:"mcp,omitempty"`
 }
 
+// QuotaLimiterSpec defines a single quota limiter enforced by lightspeed-stack.
+type QuotaLimiterSpec struct {
+	// +kubebuilder:validation:Required
+	// Name is a human-readable identifier for the limiter.
+	Name string `json:"name"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=userLimiter;clusterLimiter
+	// Type of the limiter: userLimiter enforces quota per user, clusterLimiter enforces quota across the whole cluster.
+	Type string `json:"type"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// InitialQuota is the number of tokens granted when the limiter resets.
+	InitialQuota int `json:"initialQuota"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// QuotaIncrease is the number of tokens added by the scheduler for this limiter.
+	QuotaIncrease int `json:"quotaIncrease"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Pattern=`^[1-9]\d*\s+(second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months)(\s+[1-9]\d*\s+(second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months))*$`
+	// Period is the quota reset interval, expressed as an interval literal (e.g. "1 hour", "30 seconds", "1 day", "1 hour 30 minutes").
+	Period string `json:"period"`
+}
+
+// QuotaSchedulerSpec defines the background quota scheduler configuration.
+type QuotaSchedulerSpec struct {
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default=5
+	// Period is the interval, in seconds, at which the scheduler checks limiters for reset/increase.
+	Period int `json:"period,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default=10
+	// DatabaseReconnectionCount is the number of times the scheduler retries connecting to the database.
+	DatabaseReconnectionCount int `json:"databaseReconnectionCount,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default=1
+	// DatabaseReconnectionDelay is the delay, in seconds, between database reconnection attempts.
+	DatabaseReconnectionDelay int `json:"databaseReconnectionDelay,omitempty"`
+}
+
+// QuotaSpec defines quota enforcement configuration for lightspeed-stack.
+// Quota enforcement is opt-in: when Limiters is empty, no quota_handlers config is rendered.
+type QuotaSpec struct {
+	// +kubebuilder:validation:Optional
+	// Limiters configures the quota limiters enforced by lightspeed-stack.
+	// When empty, quota enforcement is disabled.
+	Limiters []QuotaLimiterSpec `json:"limiters,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// Scheduler configures the background quota reset/increase scheduler.
+	Scheduler *QuotaSchedulerSpec `json:"scheduler,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=false
+	// EnableTokenHistory enables the token_usage table for per-user/model/provider accounting.
+	EnableTokenHistory bool `json:"enableTokenHistory,omitempty"`
+}
+
 // OpenStackLightspeedSpec defines the desired state of OpenStackLightspeed
 type OpenStackLightspeedSpec struct {
 	OpenStackLightspeedCore `json:",inline"`
@@ -150,6 +216,11 @@ type OpenStackLightspeedSpec struct {
 	// +kubebuilder:validation:Optional
 	// OKP configures the Offline Knowledge Portal (OKP) RAG source.
 	OKP *OKPSpec `json:"okp,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// Quotas configures quota enforcement (limiters, scheduler, token history) for lightspeed-stack.
+	// When omitted or Limiters is empty, quota enforcement is disabled.
+	Quotas *QuotaSpec `json:"quotas,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={}

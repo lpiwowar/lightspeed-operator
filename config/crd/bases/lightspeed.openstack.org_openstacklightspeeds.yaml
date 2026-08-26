@@ -181,6 +181,84 @@ spec:
                       When false, uses reference_url (online).
                     type: boolean
                 type: object
+              quotas:
+                description: |-
+                  Quotas configures quota enforcement (limiters, scheduler, token history) for lightspeed-stack.
+                  When omitted or Limiters is empty, quota enforcement is disabled.
+                properties:
+                  enableTokenHistory:
+                    default: false
+                    description: EnableTokenHistory enables the token_usage table
+                      for per-user/model/provider accounting.
+                    type: boolean
+                  limiters:
+                    description: |-
+                      Limiters configures the quota limiters enforced by lightspeed-stack.
+                      When empty, quota enforcement is disabled.
+                    items:
+                      description: QuotaLimiterSpec defines a single quota limiter
+                        enforced by lightspeed-stack.
+                      properties:
+                        initialQuota:
+                          description: InitialQuota is the number of tokens granted
+                            when the limiter resets.
+                          minimum: 0
+                          type: integer
+                        name:
+                          description: Name is a human-readable identifier for the
+                            limiter.
+                          type: string
+                        period:
+                          description: Period is the quota reset interval, expressed
+                            as an interval literal (e.g. "1 hour", "30 seconds", "1
+                            day", "1 hour 30 minutes").
+                          pattern: ^[1-9]\d*\s+(second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months)(\s+[1-9]\d*\s+(second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months))*$
+                          type: string
+                        quotaIncrease:
+                          description: QuotaIncrease is the number of tokens added
+                            by the scheduler for this limiter.
+                          minimum: 0
+                          type: integer
+                        type:
+                          description: 'Type of the limiter: userLimiter enforces
+                            quota per user, clusterLimiter enforces quota across the
+                            whole cluster.'
+                          enum:
+                          - userLimiter
+                          - clusterLimiter
+                          type: string
+                      required:
+                      - initialQuota
+                      - name
+                      - period
+                      - quotaIncrease
+                      - type
+                      type: object
+                    type: array
+                  scheduler:
+                    description: Scheduler configures the background quota reset/increase
+                      scheduler.
+                    properties:
+                      databaseReconnectionCount:
+                        default: 10
+                        description: DatabaseReconnectionCount is the number of times
+                          the scheduler retries connecting to the database.
+                        minimum: 1
+                        type: integer
+                      databaseReconnectionDelay:
+                        default: 1
+                        description: DatabaseReconnectionDelay is the delay, in seconds,
+                          between database reconnection attempts.
+                        minimum: 1
+                        type: integer
+                      period:
+                        default: 5
+                        description: Period is the interval, in seconds, at which
+                          the scheduler checks limiters for reset/increase.
+                        minimum: 1
+                        type: integer
+                    type: object
+                type: object
               resources:
                 default: {}
                 description: |-

@@ -77,6 +77,33 @@ okp:
   chunk_filter_query: product:(*openstack* OR *openshift*)
   offline: true
   rhokp_url: ${env.RH_SERVER_OKP}
+quota_handlers:
+  enable_token_history: true
+  limiters:
+  - initial_quota: 1000
+    name: per-user-hourly
+    period: 1 hour
+    quota_increase: 1000
+    type: user_limiter
+  - initial_quota: 100000
+    name: cluster-daily
+    period: 1 day
+    quota_increase: 100000
+    type: cluster_limiter
+  postgres:
+    ca_cert_path: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    db: lightspeed-stack
+    gss_encmode: disable
+    host: lightspeed-postgres-server.openstack-lightspeed.svc
+    namespace: quota_handlers
+    password: ${env.POSTGRESQL_PASSWORD}
+    port: 5432
+    ssl_mode: verify-full
+    user: ${env.POSTGRESQL_USER}
+  scheduler:
+    database_reconnection_count: 10
+    database_reconnection_delay: 1
+    period: 5
 rag:
   inline:
   - okp

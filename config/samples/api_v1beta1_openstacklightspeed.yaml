@@ -56,3 +56,21 @@ spec:
   #     workers: 4
   # okp:
   #   accessKey: okp-access-key-secret
+  # Uncomment to enable quota enforcement (opt-in; omit or leave limiters empty to disable):
+  # quotas:
+  #   limiters:
+  #     - name: per-user-hourly
+  #       type: userLimiter
+  #       initialQuota: 1000
+  #       quotaIncrease: 1000
+  #       period: "1 hour"
+  #     - name: cluster-daily
+  #       type: clusterLimiter
+  #       initialQuota: 100000
+  #       quotaIncrease: 100000
+  #       period: "1 day"
+  #   scheduler:
+  #     period: 30
+  #     databaseReconnectionCount: 10
+  #     databaseReconnectionDelay: 1
+  #   enableTokenHistory: true
