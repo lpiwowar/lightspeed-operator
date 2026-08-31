@@ -9,7 +9,7 @@
 
 - job:
     name: lightspeed-operator-kuttl
-    parent: cifmw-multinode-kuttl
+    parent: cifmw-base-multinode-kuttl
     dependencies:
       - openstack-k8s-operators-content-provider
     attempts: 1
