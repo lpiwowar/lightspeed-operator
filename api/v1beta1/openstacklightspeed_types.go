@@ -143,8 +143,9 @@ type OpenStackLightspeedSpec struct {
 
 	// +kubebuilder:validation:Optional
 	// Database configures persistent storage for PostgreSQL data.
-	// When omitted, an emptyDir volume is used (data is lost on pod reschedule).
-	// When set, a PersistentVolumeClaim is created and mounted.
+	// A PersistentVolumeClaim is always created and mounted; when Database
+	// is omitted, the default size is used and the cluster's default
+	// StorageClass applies.
 	Database *DatabaseSpec `json:"database,omitempty"`
 
 	// +kubebuilder:validation:Optional
