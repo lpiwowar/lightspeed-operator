@@ -19,3 +19,16 @@ spec:
     dataverseExporterLogLevel: DEBUG
   dev:
     okpChunkFilterQuery: "product:(*openstack* OR *openshift*)"
+  quotas:
+    limiters:
+      - name: per-user-hourly
+        type: userLimiter
+        initialQuota: 1000
+        quotaIncrease: 1000
+        period: "1 hour"
+      - name: cluster-daily
+        type: clusterLimiter
+        initialQuota: 100000
+        quotaIncrease: 100000
+        period: "1 day"
+    enableTokenHistory: true

@@ -710,6 +710,22 @@ func buildLightspeedStackEnvVars(instance *apiv1beta1.OpenStackLightspeed) []cor
 		Value: fmt.Sprintf("http://%s.%s.svc:%d", OKPServiceName, instance.GetNamespace(), OKPServicePort),
 	})
 	envVars = append(envVars, buildPostgresCredsEnvVars()...)
+
+	// PostgreSQL SSL configuration for the quota handler's psycopg2 connection.
+	// lightspeed-stack's src/quota/connect_pg.py never forwards ca_cert_path to
+	// psycopg2.connect() (the sslrootcert kwarg is commented out upstream), so
+	// with ssl_mode=verify-full it falls back to psycopg2's default
+	// ~/.postgresql/root.crt, which doesn't exist in this image. libpq falls
+	// back to these standard env vars when sslrootcert isn't passed explicitly.
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "PGSSLMODE",
+		Value: PostgresDefaultSSLMode,
+	})
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "PGSSLROOTCERT",
+		Value: CABundleMountPath,
+	})
+
 	return envVars
 }
 
