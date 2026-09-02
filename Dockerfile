@@ -1,5 +1,7 @@
+ARG GOLANG_BUILDER=registry.access.redhat.com/ubi9/go-toolset:1.26
+ARG OPERATOR_BASE_IMAGE=registry.access.redhat.com/ubi9/ubi-minimal:9.6
 # Build the manager binary
-FROM golang:1.26 AS builder
+FROM ${GOLANG_BUILDER} AS builder
 ARG TARGETOS
 ARG TARGETARCH
 ARG GOMAXPROCS
@@ -17,6 +19,8 @@ COPY cmd/main.go cmd/main.go
 COPY api/ api/
 COPY internal/controller/ internal/controller/
 
+USER root
+
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
 # was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
@@ -26,7 +30,7 @@ RUN GOMAXPROCS=${GOMAXPROCS} CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARG
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
+FROM ${OPERATOR_BASE_IMAGE}
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532
