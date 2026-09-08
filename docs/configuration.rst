@@ -44,12 +44,6 @@ Core fields
    * - ``llmAPIVersion``
      - No
      - Required by some providers (e.g. Azure OpenAI).
-   * - ``feedbackEnabled``
-     - No
-     - User feedback collection. Defaults to ``true``.
-   * - ``transcriptsEnabled``
-     - No
-     - Conversation transcript collection. Defaults to ``false``.
 
 .. _supported-providers:
 
@@ -69,7 +63,7 @@ Supported LLM providers (``llmEndpointType``)
    ``oc explain openstacklightspeed.spec.llmEndpointType`` on your cluster
    for the current, authoritative list.
 
-Logging (``logging``)
+Logging
 -----------------------
 
 .. list-table::
@@ -79,19 +73,36 @@ Logging (``logging``)
    * - Field
      - Default
      - Description
-   * - ``logging.ogxLogLevel``
+   * - ``ogx.logLevel``
      - ``all=info``
      - OGX container. Standard level, or ``component=level`` pairs
        (e.g. ``core=debug,providers=info``).
-   * - ``logging.lightspeedStackLogLevel``
+   * - ``lcore.logLevel``
      - ``INFO``
      - lightspeed-service-api container. ``DEBUG``/``INFO``/``WARNING``/``ERROR``/``CRITICAL``.
-   * - ``logging.dataverseExporterLogLevel``
-     - ``INFO``
-     - Feedback/transcript exporter sidecar. Same values as above.
-   * - ``logging.postgresLogLevel``
+   * - ``database.logLevel``
      - ``INFO``
      - PostgreSQL container. ``DEBUG`` also logs every SQL statement.
+
+Dataverse exporter (``dataverseExporter``)
+--------------------------------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 15 60
+
+   * - Field
+     - Default
+     - Description
+   * - ``dataverseExporter.logLevel``
+     - ``INFO``
+     - Feedback/transcript exporter sidecar. ``DEBUG``/``INFO``/``WARNING``/``ERROR``/``CRITICAL``.
+   * - ``dataverseExporter.feedback.enabled``
+     - ``true``
+     - User feedback collection (thumbs-up/down on responses).
+   * - ``dataverseExporter.transcripts.enabled``
+     - ``false``
+     - Full conversation transcript collection.
 
 Persistent storage (``database``)
 ------------------------------------
@@ -115,25 +126,26 @@ default entirely:
 .. code-block:: yaml
 
    spec:
-     resources:
-       ogx:
+     ogx:
+       resources:
          requests: {cpu: "500m", memory: "2Gi"}
          limits: {cpu: "2", memory: "8Gi"}
-       lightspeedService:
-         requests: {cpu: "250m", memory: "512Mi"}
-         limits: {cpu: "1", memory: "2Gi"}
-       postgres:
-         requests: {cpu: "30m", memory: "300Mi"}
-         limits: {cpu: "500m", memory: "2Gi"}
-       okp:
-         requests: {cpu: "500m", memory: "2Gi"}
-         limits: {cpu: "2", memory: "4Gi"}
-       consolePlugin:
+     console:
+       resources:
          requests: {cpu: "50m", memory: "64Mi"}
          limits: {cpu: "200m", memory: "256Mi"}
-       mcp:
-         requests: {cpu: "50m", memory: "300Mi"}
-         limits: {memory: "500Mi"}
+     lcore:
+       resources:
+         requests: {cpu: "250m", memory: "512Mi"}
+         limits: {cpu: "1", memory: "2Gi"}
+     database:
+       resources:
+         requests: {cpu: "30m", memory: "300Mi"}
+         limits: {cpu: "500m", memory: "2Gi"}
+     okp:
+       resources:
+         requests: {cpu: "500m", memory: "2Gi"}
+         limits: {cpu: "2", memory: "4Gi"}
 
 .. _offline-knowledge-portal:
 
@@ -249,10 +261,14 @@ Developer / experimental options (``dev``)
        featureFlags:
          - rhoso_mcps   # enables the read-only MCP introspection sidecar
        okpChunkFilterQuery: "product:(*openstack* OR *openshift*)"  # example override
-       okpRagOnly: false  # include bundled community docs too, not just OKP
-       rhosMCPConfig: |
-         debug: true
-         workers: 4
+       okpRagOnly: true  # include bundled community docs too, not just OKP
+       rhosMCP:
+         resources:
+           requests: {cpu: "50m", memory: "300Mi"}
+           limits: {memory: "500Mi"}
+         config: |
+           debug: true
+           workers: 4
 
 * ``okpChunkFilterQuery`` and ``okpRagOnly`` take effect immediately, with
   no ``featureFlags`` entry needed — they're independent of
@@ -261,7 +277,8 @@ Developer / experimental options (``dev``)
 * ``rhoso_mcps`` — the one flag that does need to be set. Deploys the MCP
   introspection sidecar, which is read-only **by default**. See
   :doc:`usage`.
-* ``rhosMCPConfig`` is deep-merged on top of the operator's own defaults
-  — it can override anything the default config sets, including the
-  ``allow_write`` flags that keep introspection read-only. Only set this
-  if you understand exactly what you're overriding.
+* ``rhosMCP`` is deep-merged on top of the operator's own defaults
+  — ``config`` can override anything the default config sets, including the
+  ``allow_write`` flags that keep introspection read-only. ``resources`` sets
+  compute resources for the rhos-mcps sidecar (defaults shown above). Only set
+  ``config`` if you understand exactly what you're overriding.

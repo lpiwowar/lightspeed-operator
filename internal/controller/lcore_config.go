@@ -105,8 +105,8 @@ func buildLCoreOGXConfig() map[string]interface{} {
 }
 
 func buildLCoreUserDataCollectionConfig(_ *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) map[string]interface{} {
-	feedbackEnabled := instance.Spec.FeedbackEnabled == nil || *instance.Spec.FeedbackEnabled
-	transcriptsEnabled := instance.Spec.TranscriptsEnabled
+	feedbackEnabled := isDataverseExporterFeedbackEnabled(instance)
+	transcriptsEnabled := isDataverseExporterTranscriptsEnabled(instance)
 
 	return map[string]interface{}{
 		"feedback_enabled":    feedbackEnabled,
@@ -237,7 +237,28 @@ func buildLCoreQuotaHandlersConfig(h *common_helper.Helper, instance *apiv1beta1
 
 // isDataCollectionEnabled returns true if at least one of feedback or transcripts is enabled.
 func isDataCollectionEnabled(instance *apiv1beta1.OpenStackLightspeed) bool {
-	return (instance.Spec.FeedbackEnabled == nil || *instance.Spec.FeedbackEnabled) || instance.Spec.TranscriptsEnabled
+	return isDataverseExporterFeedbackEnabled(instance) || isDataverseExporterTranscriptsEnabled(instance)
+}
+
+func isDataverseExporterFeedbackEnabled(instance *apiv1beta1.OpenStackLightspeed) bool {
+	if instance.Spec.DataverseExporter == nil || instance.Spec.DataverseExporter.Feedback == nil || instance.Spec.DataverseExporter.Feedback.Enabled == nil {
+		return true
+	}
+	return *instance.Spec.DataverseExporter.Feedback.Enabled
+}
+
+func isDataverseExporterTranscriptsEnabled(instance *apiv1beta1.OpenStackLightspeed) bool {
+	if instance.Spec.DataverseExporter == nil || instance.Spec.DataverseExporter.Transcripts == nil {
+		return false
+	}
+	return instance.Spec.DataverseExporter.Transcripts.Enabled
+}
+
+func dataverseExporterLogLevel(instance *apiv1beta1.OpenStackLightspeed) string {
+	if instance.Spec.DataverseExporter == nil {
+		return ""
+	}
+	return instance.Spec.DataverseExporter.LogLevel
 }
 
 // buildExporterConfigMap creates the ConfigMap for the dataverse exporter sidecar.

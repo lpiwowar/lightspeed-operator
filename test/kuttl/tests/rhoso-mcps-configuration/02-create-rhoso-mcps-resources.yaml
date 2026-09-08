@@ -13,10 +13,12 @@ spec:
   llmProjectID: test-project-id
   llmDeploymentName: test-deployment-name
   llmAPIVersion: v1
-  logging:
-    ogxLogLevel: DEBUG
-    lightspeedStackLogLevel: WARNING
-    dataverseExporterLogLevel: DEBUG
+  ogx:
+    logLevel: DEBUG
+  lcore:
+    logLevel: WARNING
+  dataverseExporter:
+    logLevel: DEBUG
   dev:
     featureFlags:
       - rhoso_mcps

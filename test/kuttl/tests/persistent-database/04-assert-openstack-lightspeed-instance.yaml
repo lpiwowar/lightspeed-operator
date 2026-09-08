@@ -43,6 +43,14 @@ metadata:
   namespace: openstack-lightspeed
 spec:
   database:
+    logLevel: INFO
+    resources:
+      limits:
+        cpu: 500m
+        memory: 2Gi
+      requests:
+        cpu: 30m
+        memory: 300Mi
     size: "2Gi"
 status:
   conditions:

@@ -148,6 +148,11 @@ func buildPostgresPodTemplateSpec(instance *apiv1beta1.OpenStackLightspeed) core
 	}
 	envVars = append(envVars, buildPostgresCredsEnvVars()...)
 
+	resources := corev1.ResourceRequirements{}
+	if instance.Spec.Database != nil {
+		resources = instance.Spec.Database.Resources
+	}
+
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      generatePostgresSelectorLabels(),
@@ -179,7 +184,7 @@ func buildPostgresPodTemplateSpec(instance *apiv1beta1.OpenStackLightspeed) core
 					LivenessProbe:  buildPostgresProbe(PostgresLivenessProbePeriodSeconds, PostgresLivenessProbeTimeoutSeconds, PostgresLivenessProbeFailureThreshold, 0),
 					ReadinessProbe: buildPostgresProbe(PostgresReadinessProbePeriodSeconds, PostgresReadinessProbeTimeoutSeconds, PostgresReadinessProbeFailureThreshold, 0),
 					VolumeMounts:   volumeMounts,
-					Resources:      instance.Spec.Resources.Postgres,
+					Resources:      resources,
 					Env:            envVars,
 				},
 			},

@@ -49,7 +49,10 @@ const consoleLocalesPath = "/usr/share/nginx/html/locales/en/" + consoleLocalesF
 // Includes an init container that rewrites OpenShift references to OpenStack
 // in the locales JSON file using an emptyDir volume.
 func buildConsoleDeploymentSpec(consoleImage string, instance *apiv1beta1.OpenStackLightspeed) appsv1.DeploymentSpec {
-	consoleRes := instance.Spec.Resources.ConsolePlugin
+	consoleResources := corev1.ResourceRequirements{}
+	if instance.Spec.Console != nil {
+		consoleResources = instance.Spec.Console.Resources
+	}
 
 	replicas := int32(1)
 	volumeDefaultMode := VolumeDefaultMode
@@ -89,7 +92,7 @@ func buildConsoleDeploymentSpec(consoleImage string, instance *apiv1beta1.OpenSt
 							"awk '" + consoleLocalesRewriteAwk + "' " +
 								consoleLocalesPath + " > /locales-rewrite/" + consoleLocalesFilename,
 						},
-						Resources: consoleRes,
+						Resources: consoleResources,
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "locales-rewrite",
@@ -113,7 +116,7 @@ func buildConsoleDeploymentSpec(consoleImage string, instance *apiv1beta1.OpenSt
 						SecurityContext: &corev1.SecurityContext{
 							AllowPrivilegeEscalation: toPtr(false),
 						},
-						Resources: consoleRes,
+						Resources: consoleResources,
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "lightspeed-console-plugin-cert",

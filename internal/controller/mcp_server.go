@@ -97,9 +97,9 @@ func deepMerge(base, override map[string]interface{}) map[string]interface{} {
 }
 
 // buildMCPServerConfigData renders the MCP server config template and, when
-// rhosMCPConfig is provided, deep-merges the user config on top. The
+// rhosMCP is provided, deep-merges the user config on top. The
 // openstack.enabled and openshift.enabled flags are always enforced.
-func buildMCPServerConfigData(openStackReady bool, rhosMCPConfig string) (string, error) {
+func buildMCPServerConfigData(openStackReady bool, rhosMCP string) (string, error) {
 	var buf bytes.Buffer
 	err := mcpServerConfigTmpl.Execute(&buf, mcpServerConfigParams{
 		OpenStackEnabled: openStackReady,
@@ -109,7 +109,7 @@ func buildMCPServerConfigData(openStackReady bool, rhosMCPConfig string) (string
 		return "", fmt.Errorf("failed to render MCP server config template: %w", err)
 	}
 
-	if rhosMCPConfig == "" {
+	if rhosMCP == "" {
 		return buf.String(), nil
 	}
 
@@ -119,8 +119,8 @@ func buildMCPServerConfigData(openStackReady bool, rhosMCPConfig string) (string
 	}
 
 	var userConfig map[string]interface{}
-	if err := yaml.Unmarshal([]byte(rhosMCPConfig), &userConfig); err != nil {
-		return "", fmt.Errorf("failed to parse rhosMCPConfig: %w", err)
+	if err := yaml.Unmarshal([]byte(rhosMCP), &userConfig); err != nil {
+		return "", fmt.Errorf("failed to parse rhosMCP: %w", err)
 	}
 
 	merged := deepMerge(baseConfig, userConfig)
@@ -152,7 +152,11 @@ func BuildMCPServerConfigMap(
 	openStackReady bool,
 ) (corev1.ConfigMap, error) {
 	devConfig, _ := parseDevConfig(instance)
-	configData, err := buildMCPServerConfigData(openStackReady, devConfig.RhosMCPConfig)
+	rhosMCPConfigYAML := ""
+	if devConfig.RhosMCP != nil {
+		rhosMCPConfigYAML = devConfig.RhosMCP.Config
+	}
+	configData, err := buildMCPServerConfigData(openStackReady, rhosMCPConfigYAML)
 	if err != nil {
 		return corev1.ConfigMap{}, err
 	}

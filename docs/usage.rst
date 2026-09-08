@@ -52,8 +52,10 @@ configuration and an example.
 Feedback and transcripts
 ----------------------------
 
-* ``feedbackEnabled`` (default ``true``) — thumbs-up/down on responses.
-* ``transcriptsEnabled`` (default ``false``) — full conversation transcripts.
+Configured under ``dataverseExporter`` on the CR (:doc:`configuration`):
+
+* ``dataverseExporter.feedback.enabled`` (default ``true``) — thumbs-up/down on responses.
+* ``dataverseExporter.transcripts.enabled`` (default ``false``) — full conversation transcripts.
 
 Both configured on the CR (:doc:`configuration`). Used to improve answer
 quality — disable either if that doesn't fit your data policy.

@@ -1,5 +1,5 @@
 ##############################################################################
-#   Assert that rhosMCPConfig is deep-merged with operator defaults          #
+#   Assert that rhosMCP is deep-merged with operator defaults          #
 ##############################################################################
 apiVersion: kuttl.dev/v1beta1
 kind: TestAssert
