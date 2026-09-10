@@ -132,7 +132,7 @@ func buildOKPPodTemplateSpec(instance *apiv1beta1.OpenStackLightspeed) corev1.Po
 			Containers: []corev1.Container{
 				{
 					Name:  OKPContainerName,
-					Image: apiv1beta1.OpenStackLightspeedDefaultValues.OKPImageURL,
+					Image: instance.OKPContainerImage(),
 					Ports: []corev1.ContainerPort{{Name: "okp", ContainerPort: OKPContainerPort}},
 					Env:   envVars,
 					ReadinessProbe: &corev1.Probe{

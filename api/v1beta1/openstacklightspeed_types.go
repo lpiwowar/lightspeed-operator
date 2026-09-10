@@ -32,6 +32,9 @@ const (
 	// LCoreContainerImage is the fall-back container image for LCore
 	LCoreContainerImage = "quay.io/lightspeed-core/lightspeed-stack:dev-latest"
 
+	// OGXContainerImage is the fall-back container image for OGX/llama-stack
+	OGXContainerImage = LCoreContainerImage
+
 	// ExporterContainerImage is the fall-back container image for the Dataverse Exporter
 	ExporterContainerImage = "quay.io/lightspeed-core/lightspeed-to-dataverse-exporter:latest"
 
@@ -63,7 +66,7 @@ const (
 //   - featureFlags: list of experimental feature flags to enable. Configuration options for experimental features must also live within the `DevSpec`.
 //   - okpChunkFilterQuery: Solr filter query for OKP searches (default: version-aware query combining detected OpenStack and OCP versions)
 //   - okpRagOnly: when true, only OKP is used as a RAG source (default: true)
-//   - rhosMCPC: configuration for the rhos-mcps sidecar (resources and custom YAML config); config is deep-merged on top of the operator defaults, openstack.enabled and openshift.enabled are always overridden by the operator
+//   - rhosMCP: configuration for the rhos-mcps sidecar (resources, container image override, and custom YAML config); config is deep-merged on top of the operator defaults, openstack.enabled and openshift.enabled are always overridden by the operator
 type DevSpec struct {
 	FeatureFlags        []string `json:"featureFlags,omitempty"`
 	OKPChunkFilterQuery string   `json:"okpChunkFilterQuery,omitempty"`
@@ -80,6 +83,9 @@ type RhosMCPSpec struct {
 
 	// Config is a YAML string that overrides the default configuration (file internal/controller/assets/mcp_server_config.yaml.tmpl) for the rhos-mcps service.
 	Config string `json:"config,omitempty"`
+
+	// ContainerImage overrides the rhos-mcps container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // OKPSpec defines configuration for the Offline Knowledge Portal (OKP).
@@ -101,6 +107,10 @@ type OKPSpec struct {
 	// +kubebuilder:default:={requests: {cpu: "500m", memory: "2Gi"}, limits: {cpu: "2", memory: "4Gi"}}
 	// Resources sets compute resources for the Offline Knowledge Portal container.
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the OKP container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // OGXSpec defines configuration for the OGX container.
@@ -117,6 +127,10 @@ type OGXSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OGX Log Level"
 	// Log level configuration for the OGX container. Supports standard levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level" (e.g., "core=debug,providers=info").
 	LogLevel string `json:"logLevel,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the OGX/llama-stack container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // DatabaseSpec defines configuration for persistent PostgreSQL storage.
@@ -141,6 +155,10 @@ type DatabaseSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="PostgreSQL Log Level"
 	// Log level for the PostgreSQL container. When set to DEBUG, enables logging of all SQL statements (log_statement = all).
 	LogLevel string `json:"logLevel,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the PostgreSQL container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // ConsoleSpec defines configuration for the lightspeed console plugin.
@@ -150,6 +168,10 @@ type ConsoleSpec struct {
 	// Resources sets compute resources for the lightspeed-console-plugin
 	// container and its init container.
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the console plugin container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // LCoreSpec defines configuration for the lightspeed-service-api container.
@@ -166,6 +188,17 @@ type LCoreSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Lightspeed Stack Log Level"
 	// Log level for the lightspeed-service-api container. Supports standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
 	LogLevel string `json:"logLevel,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the lightspeed-service-api container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
+}
+
+// RAG defines configuration for the RAG vector database init container.
+type RAG struct {
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the RAG init-container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // QuotaLimiterSpec defines a single quota limiter enforced by lightspeed-stack.
@@ -299,6 +332,10 @@ type DataverseExporter struct {
 	// +kubebuilder:validation:Optional
 	// Transcripts configures conversation transcript collection.
 	Transcripts *DataverseExporterTranscripts `json:"transcripts,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the dataverse exporter sidecar container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // OpenStackLightspeedCore defines the desired state of OpenStackLightspeed
@@ -360,8 +397,13 @@ type OpenStackLightspeedCore struct {
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={}
+
 	// LCore configures the lightspeed-service-api container.
 	LCore *LCoreSpec `json:"lcore,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// RAG configures the RAG vector database init container.
+	RAG *RAG `json:"rag,omitempty"`
 }
 
 // OpenStackLightspeedStatus defines the observed state of OpenStackLightspeed
@@ -442,6 +484,7 @@ func (instance OpenStackLightspeed) IsReady() bool {
 type OpenStackLightspeedDefaults struct {
 	RAGImageURL          string
 	LCoreImageURL        string
+	OGXImageURL          string
 	ExporterImageURL     string
 	PostgresImageURL     string
 	ConsoleImageURL      string
@@ -464,6 +507,8 @@ func SetupDefaults() {
 			"RELATED_IMAGE_OPENSTACK_LIGHTSPEED_IMAGE_URL_DEFAULT", OpenStackLightspeedContainerImage),
 		LCoreImageURL: util.GetEnvVar(
 			"RELATED_IMAGE_LCORE_IMAGE_URL_DEFAULT", LCoreContainerImage),
+		OGXImageURL: util.GetEnvVar(
+			"RELATED_IMAGE_OGX_IMAGE_URL_DEFAULT", OGXContainerImage),
 		ExporterImageURL: util.GetEnvVar(
 			"RELATED_IMAGE_EXPORTER_IMAGE_URL_DEFAULT", ExporterContainerImage),
 		PostgresImageURL: util.GetEnvVar(

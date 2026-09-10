@@ -23,7 +23,6 @@ spec:
     featureFlags:
       - rhoso_mcps
     rhosMCP:
-      containerImage: quay.io/openstack-lightspeed/lightspeed-mcps:latest
       config: |
         openstack:
           enabled: true

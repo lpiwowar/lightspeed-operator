@@ -53,6 +53,10 @@ spec:
                 default: {}
                 description: Console configures the lightspeed console plugin.
                 properties:
+                  containerImage:
+                    description: ContainerImage overrides the console plugin container
+                      image. When unset, the operator default is used.
+                    type: string
                   resources:
                     default:
                       limits:
@@ -134,6 +138,10 @@ spec:
                     description: |-
                       StorageClass name for the PersistentVolumeClaim. If omitted, the cluster's
                       default StorageClass is used.
+                    type: string
+                  containerImage:
+                    description: ContainerImage overrides the PostgreSQL container
+                      image. When unset, the operator default is used.
                     type: string
                   logLevel:
                     default: INFO
@@ -225,6 +233,10 @@ spec:
                 description: DataverseExporter configures the dataverse exporter sidecar
                   (feedback, transcripts, logging).
                 properties:
+                  containerImage:
+                    description: ContainerImage overrides the dataverse exporter sidecar
+                      container image. When unset, the operator default is used.
+                    type: string
                   feedback:
                     description: Feedback configures user feedback collection.
                     properties:
@@ -263,6 +275,10 @@ spec:
                 default: {}
                 description: LCore configures the lightspeed-service-api container.
                 properties:
+                  containerImage:
+                    description: ContainerImage overrides the lightspeed-service-api
+                      container image. When unset, the operator default is used.
+                    type: string
                   logLevel:
                     default: INFO
                     description: 'Log level for the lightspeed-service-api container.
@@ -387,6 +403,10 @@ spec:
                 default: {}
                 description: OGX configures the OGX container.
                 properties:
+                  containerImage:
+                    description: ContainerImage overrides the OGX/llama-stack container
+                      image. When unset, the operator default is used.
+                    type: string
                   logLevel:
                     default: all=info
                     description: Log level configuration for the OGX container. Supports
@@ -473,6 +493,10 @@ spec:
                       AccessKey is the name of the Secret containing the access key for the OKP server.
                       The secret must contain a key named "access_key".
                       An access key can be obtained from https://access.redhat.com/offline/access
+                    type: string
+                  containerImage:
+                    description: ContainerImage overrides the OKP container image.
+                      When unset, the operator default is used.
                     type: string
                   offline:
                     default: true
@@ -626,6 +650,14 @@ spec:
                         minimum: 1
                         type: integer
                     type: object
+                type: object
+              rag:
+                description: RAG configures the RAG vector database init container.
+                properties:
+                  containerImage:
+                    description: ContainerImage overrides the RAG init-container image.
+                      When unset, the operator default is used.
+                    type: string
                 type: object
               tlsCACertBundle:
                 description: Configmap name containing a CA Certificates bundle

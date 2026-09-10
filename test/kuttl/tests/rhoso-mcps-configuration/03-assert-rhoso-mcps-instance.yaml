@@ -17,6 +17,7 @@ spec:
         - name: lightspeed-service-api
         - name: lightspeed-to-dataverse-exporter
         - name: rhoso-mcps
+          image: quay.io/openstack-lightspeed/lightspeed-mcps:latest
           resources:
             requests:
               cpu: 50m

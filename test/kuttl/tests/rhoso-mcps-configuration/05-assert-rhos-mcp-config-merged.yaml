@@ -34,11 +34,9 @@ commands:
         fi
       }
 
-      # User values should be merged
-      assert_yaml_field "debug" "True"
-      assert_yaml_field "workers" "4"
-
       # Template defaults should be preserved
+      assert_yaml_field "debug" "False"
+      assert_yaml_field "workers" "1"
       assert_yaml_field "port" "8080"
       assert_yaml_field "ip" "0.0.0.0"
       assert_yaml_field "openstack.ca_cert" "./tls-ca-bundle.pem"

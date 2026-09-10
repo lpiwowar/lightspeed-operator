@@ -126,6 +126,16 @@ default entirely:
 .. code-block:: yaml
 
    spec:
+     dev:
+       featureFlags:
+       - rhoso_mcps
+       rhosMCP:
+         resources:
+           requests:
+             cpu: "50m"
+             memory: "64Mi"
+           limits:
+             memory: "200Mi"
      ogx:
        resources:
          requests: {cpu: "500m", memory: "2Gi"}
@@ -146,6 +156,35 @@ default entirely:
        resources:
          requests: {cpu: "500m", memory: "2Gi"}
          limits: {cpu: "2", memory: "4Gi"}
+
+Container images (``containerImage``)
+--------------------------------------
+
+Every container has a default container image. Setting one replaces its
+default entirely:
+
+.. code-block:: yaml
+
+   spec:
+     dev:
+       featureFlags:
+       - rhoso_mcps
+       rhosMCP:
+         containerImage: quay.io/openstack-lightspeed/lightspeed-mcps:latest
+     rag:
+       containerImage: quay.io/openstack-lightspeed/rag-content:os-docs-2026.1-ogx
+     ogx:
+       containerImage: quay.io/lightspeed-core/lightspeed-stack:dev-latest
+     console:
+       containerImage: registry.redhat.io/openshift-lightspeed/lightspeed-console-plugin-rhel9:1.0.12
+     lightspeed:
+       containerImage: quay.io/lightspeed-core/lightspeed-stack:dev-latest
+     database:
+       containerImage: quay.io/sclorg/postgresql-16-c10s:latest
+     dataverseExporter:
+       containerImage: quay.io/lightspeed-core/lightspeed-to-dataverse-exporter:latest
+     okp:
+       containerImage: registry.redhat.io/offline-knowledge-portal/rhokp-rhel9:latest
 
 .. _offline-knowledge-portal:
 

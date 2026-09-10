@@ -20,7 +20,6 @@ import (
 	"context"
 	"crypto/rand"
 	_ "embed" // Required for go:embed directives in this package
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -155,18 +154,6 @@ func generateOKPSelectorLabels() map[string]string {
 	}
 }
 
-// parseDevConfig unmarshals the Dev RawExtension into a DevSpec.
-// Returns a zero-value DevSpec and an error on malformed input.
-func parseDevConfig(instance *apiv1beta1.OpenStackLightspeed) (apiv1beta1.DevSpec, error) {
-	var devConfig apiv1beta1.DevSpec
-	if len(instance.Spec.Dev.Raw) > 0 {
-		if err := json.Unmarshal(instance.Spec.Dev.Raw, &devConfig); err != nil {
-			return devConfig, err
-		}
-	}
-	return devConfig, nil
-}
-
 // defaultRhosMCPResources returns the default resource requirements for the rhos-mcps sidecar.
 func defaultRhosMCPResources() corev1.ResourceRequirements {
 	return corev1.ResourceRequirements{
@@ -183,7 +170,7 @@ func defaultRhosMCPResources() corev1.ResourceRequirements {
 // getRhosMCPResources returns compute resources for the rhos-mcps sidecar from dev.rhosMCP.resources,
 // falling back to operator defaults when unset.
 func getRhosMCPResources(instance *apiv1beta1.OpenStackLightspeed) corev1.ResourceRequirements {
-	devConfig, _ := parseDevConfig(instance)
+	devConfig, _ := instance.ParseDevConfig()
 	resources := defaultRhosMCPResources()
 	if devConfig.RhosMCP != nil {
 		for name, quantity := range devConfig.RhosMCP.Resources.Requests {
@@ -198,7 +185,7 @@ func getRhosMCPResources(instance *apiv1beta1.OpenStackLightspeed) corev1.Resour
 
 // isRHOSOMCPEnabled returns true if the "rhoso_mcps" feature flag is present in the dev config.
 func isRHOSOMCPEnabled(instance *apiv1beta1.OpenStackLightspeed) (bool, error) {
-	devConfig, err := parseDevConfig(instance)
+	devConfig, err := instance.ParseDevConfig()
 	if err != nil {
 		return false, err
 	}
@@ -207,7 +194,7 @@ func isRHOSOMCPEnabled(instance *apiv1beta1.OpenStackLightspeed) (bool, error) {
 
 // getOKPChunkFilterQuery returns the chunk filter query from the dev config, or a version-aware default.
 func getOKPChunkFilterQuery(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) string {
-	devConfig, _ := parseDevConfig(instance)
+	devConfig, _ := instance.ParseDevConfig()
 	if devConfig.OKPChunkFilterQuery != "" {
 		return devConfig.OKPChunkFilterQuery
 	}

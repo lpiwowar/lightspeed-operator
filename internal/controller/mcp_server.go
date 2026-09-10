@@ -151,7 +151,7 @@ func BuildMCPServerConfigMap(
 	instance *apiv1beta1.OpenStackLightspeed,
 	openStackReady bool,
 ) (corev1.ConfigMap, error) {
-	devConfig, _ := parseDevConfig(instance)
+	devConfig, _ := instance.ParseDevConfig()
 	rhosMCPConfigYAML := ""
 	if devConfig.RhosMCP != nil {
 		rhosMCPConfigYAML = devConfig.RhosMCP.Config

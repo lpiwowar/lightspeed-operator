@@ -297,4 +297,19 @@ var _ = ginkgo.Describe("Console Plugin", func() {
 			gomega.Expect(result).To(gomega.Equal(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL))
 		})
 	})
+
+	ginkgo.Describe("ConsoleContainerImage override", func() {
+		ginkgo.It("should override OCP version-based console image selection", func() {
+			instance := &apiv1beta1.OpenStackLightspeed{
+				Spec: apiv1beta1.OpenStackLightspeedSpec{
+					Console: &apiv1beta1.ConsoleSpec{
+						ContainerImage: "custom/console:override",
+					},
+				},
+			}
+
+			result := instance.ConsoleContainerImage(apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL)
+			gomega.Expect(result).To(gomega.Equal("custom/console:override"))
+		})
+	})
 })

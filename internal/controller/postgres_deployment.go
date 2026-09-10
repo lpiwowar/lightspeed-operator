@@ -163,7 +163,7 @@ func buildPostgresPodTemplateSpec(instance *apiv1beta1.OpenStackLightspeed) core
 			Containers: []corev1.Container{
 				{
 					Name:            PostgresDeploymentName,
-					Image:           apiv1beta1.OpenStackLightspeedDefaultValues.PostgresImageURL,
+					Image:           instance.PostgresContainerImage(),
 					ImagePullPolicy: corev1.PullAlways,
 					Ports: []corev1.ContainerPort{
 						{

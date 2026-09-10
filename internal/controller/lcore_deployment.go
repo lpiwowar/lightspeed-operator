@@ -71,7 +71,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 
 	ogxContainer := corev1.Container{
 		Name:         "ogx",
-		Image:        apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
+		Image:        instance.OGXContainerImage(),
 		Command:      []string{"ogx", "run", "--insecure", VectorDBVolumeOGXConfigPath},
 		Ports:        []corev1.ContainerPort{{Name: "ogx", ContainerPort: OGXContainerPort}},
 		VolumeMounts: ogxMounts,
@@ -142,7 +142,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 
 	lightspeedStackContainer := corev1.Container{
 		Name:            "lightspeed-service-api",
-		Image:           apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
+		Image:           instance.LightspeedContainerImage(),
 		Args:            []string{"-c", VectorDBVolumeLightspeedStackConfigPath},
 		Ports:           []corev1.ContainerPort{{Name: "https", ContainerPort: OpenStackLightspeedAppServerContainerPort}},
 		VolumeMounts:    lightspeedStackMounts,
@@ -159,7 +159,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 	if dataCollectionEnabled {
 		exporterContainer := corev1.Container{
 			Name:            DataverseExporterContainerName,
-			Image:           apiv1beta1.OpenStackLightspeedDefaultValues.ExporterImageURL,
+			Image:           instance.ExporterContainerImage(),
 			ImagePullPolicy: corev1.PullAlways,
 			Args: []string{
 				"--mode", "openshift",
@@ -208,7 +208,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 
 		mcpContainer := corev1.Container{
 			Name:         "rhoso-mcps",
-			Image:        apiv1beta1.OpenStackLightspeedDefaultValues.MCPServerImageURL,
+			Image:        instance.MCPContainerImage(),
 			VolumeMounts: mcpMounts,
 			Resources:    getRhosMCPResources(instance),
 			StartupProbe: &corev1.Probe{
@@ -288,7 +288,7 @@ func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed, initResources
 	var containers []corev1.Container
 	containers = append(containers, corev1.Container{
 		Name:  "vector-database-collect",
-		Image: apiv1beta1.OpenStackLightspeedDefaultValues.RAGImageURL,
+		Image: instance.RAGContainerImage(),
 		Command: []string{
 			"sh", VectorDBScriptsMountPath + "/" + VectorDBCollectScriptKey,
 			"--vector-db-path", VectorDBVolumeMountPath,
@@ -315,14 +315,14 @@ func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed, initResources
 		"--ogx-config-path", OGXConfigInitContainerMountPath,
 		"--lightspeed-stack-path", LightspeedStackInitContainerMountPath,
 	}
-	devConfig, _ := parseDevConfig(instance)
+	devConfig, _ := instance.ParseDevConfig()
 	if devConfig.OKPRagOnly == nil || *devConfig.OKPRagOnly {
 		configBuildCmd = append(configBuildCmd, "--disable-rag-entries")
 	}
 
 	containers = append(containers, corev1.Container{
 		Name:            "vector-database-config-build",
-		Image:           apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
+		Image:           instance.LightspeedContainerImage(),
 		Command:         configBuildCmd,
 		SecurityContext: securityContext,
 		Resources:       initResources,
