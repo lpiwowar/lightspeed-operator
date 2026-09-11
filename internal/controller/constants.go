@@ -151,10 +151,11 @@ const (
 
 	// -- Health probe settings for the rhoso-mcps container. --------------------
 
-	MCPServerHealthPath            = "/health"
-	MCPServerProbePeriodSeconds    = int32(10)
-	MCPServerProbeTimeoutSeconds   = int32(5)
-	MCPServerProbeFailureThreshold = int32(3)
+	MCPServerHealthPath                   = "/health"
+	MCPServerProbePeriodSeconds           = int32(10)
+	MCPServerProbeTimeoutSeconds          = int32(5)
+	MCPServerStartupProbeFailureThreshold = int32(30)
+	MCPServerProbeFailureThreshold        = int32(3)
 
 	// ---------------------------------------------------------------------------
 

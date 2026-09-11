@@ -211,6 +211,17 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 			Image:        apiv1beta1.OpenStackLightspeedDefaultValues.MCPServerImageURL,
 			VolumeMounts: mcpMounts,
 			Resources:    getRhosMCPResources(instance),
+			StartupProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: MCPServerHealthPath,
+						Port: intstr.FromInt32(MCPServerPort),
+					},
+				},
+				PeriodSeconds:    MCPServerProbePeriodSeconds,
+				TimeoutSeconds:   MCPServerProbeTimeoutSeconds,
+				FailureThreshold: MCPServerStartupProbeFailureThreshold,
+			},
 			LivenessProbe: &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
