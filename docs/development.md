@@ -61,3 +61,22 @@ graph TB
 **OKP is deployed on every install, not opt-in.** It's the default RAG
 source; the bundled community documentation is available too, but only if
 you explicitly opt in. See {doc}`configuration` for details.
+
+## Pod security defaults
+
+Operator-managed workloads are hardened by default with explicit
+`securityContext` settings:
+
+- `runAsNonRoot: true`
+- `allowPrivilegeEscalation: false`
+- `capabilities.drop: ["ALL"]`
+- Pod-level `seccompProfile.type: RuntimeDefault` where supported
+
+`readOnlyRootFilesystem: true` is enabled for most containers where
+validated. Current intentional exceptions are:
+
+- **OKP** container (runtime writes to image-managed paths)
+- **MCP** sidecar (optional dev feature; may need mutable runtime paths)
+
+If you change container startup behavior or image layout, re-validate
+writable paths before enabling/disabling `readOnlyRootFilesystem`.
