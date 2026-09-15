@@ -131,7 +131,7 @@ type ContainerResourcesSpec struct {
 	ConsolePlugin corev1.ResourceRequirements `json:"consolePlugin,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:={requests: {cpu: "50m", memory: "64Mi"}, limits: {memory: "200Mi"}}
+	// +kubebuilder:default:={requests: {cpu: "50m", memory: "300Mi"}, limits: {memory: "500Mi"}}
 	// MCP sets compute resources for the RHOSO MCP server sidecar container
 	// (only created when the rhoso_mcps feature flag is enabled).
 	MCP corev1.ResourceRequirements `json:"mcp,omitempty"`

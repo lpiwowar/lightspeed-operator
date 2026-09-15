@@ -132,8 +132,8 @@ default entirely:
          requests: {cpu: "50m", memory: "64Mi"}
          limits: {cpu: "200m", memory: "256Mi"}
        mcp:
-         requests: {cpu: "50m", memory: "64Mi"}
-         limits: {memory: "200Mi"}
+         requests: {cpu: "50m", memory: "300Mi"}
+         limits: {memory: "500Mi"}
 
 .. _offline-knowledge-portal:
 

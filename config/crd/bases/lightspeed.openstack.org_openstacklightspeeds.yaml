@@ -475,10 +475,10 @@ spec:
                   mcp:
                     default:
                       limits:
-                        memory: 200Mi
+                        memory: 500Mi
                       requests:
                         cpu: 50m
-                        memory: 64Mi
+                        memory: 300Mi
                     description: |-
                       MCP sets compute resources for the RHOSO MCP server sidecar container
                       (only created when the rhoso_mcps feature flag is enabled).
