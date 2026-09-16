@@ -21,7 +21,7 @@ require (
 
 // from https://github.com/openstack-k8s-operators/lib-common/blob/main/modules/common/go.mod
 // must be consistent within modules and service operators
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20250711200046-c86d80652a9e
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20260710141509-36dec0bfafe4
 
 require (
 	cel.dev/expr v0.25.1 // indirect
