@@ -7,5 +7,5 @@ reviews:
           Fail when a pull request changes user-visible behavior, installation, configuration,
           OpenStackLightspeed CRD fields, deployment requirements, or development workflows
           without updating the applicable documentation. Use README.md for the project overview
-          and quickstart, and docs/*.rst for detailed installation, configuration, usage, and
+          and quickstart, and docs/*.md for detailed installation, configuration, usage, and
           troubleshooting. Pass changes that are internal-only and do not affect documented behavior.
