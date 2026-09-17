@@ -1,11 +1,6 @@
 authentication:
   module: k8s
   skip_for_health_probes: true
-byok_rag:
-- rag_id: vs_UUID
-  vector_db_id: vs_UUID
-  score_multiplier: 1.0
-  db_path: NONE
 conversation_cache:
   postgres:
     ca_cert_path: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
@@ -68,15 +63,11 @@ database:
 inference:
   default_model: ibm-granite/granite-3.1-8b-instruct-UPDATE
   default_provider: openstack-lightspeed-provider
-llama_stack:
-  url: http://localhost:8321
-  use_as_library_client: false
 mcp_servers: []
 name: Lightspeed Core Service (LCS)
-okp:
-  chunk_filter_query: product:(*openstack* OR *openshift*)
-  offline: true
-  rhokp_url: ${env.RH_SERVER_OKP}
+ogx:
+  url: http://localhost:8321
+  use_as_library_client: false
 quota_handlers:
   enable_token_history: true
   limiters:
@@ -105,8 +96,20 @@ quota_handlers:
     database_reconnection_delay: 1
     period: 5
 rag:
-  inline:
-  - okp
+  byok:
+    stores:
+    - rag_id: vs_UUID
+      vector_db_id: vs_UUID
+      score_multiplier: 1.0
+      db_path: NONE
+  okp:
+    chunk_filter_query: product:(*openstack* OR *openshift*)
+    offline: true
+    rhokp_url: ${env.RH_SERVER_OKP}
+  retrieval:
+    inline:
+      sources:
+      - okp
 service:
   access_log: true
   auth_enabled: true

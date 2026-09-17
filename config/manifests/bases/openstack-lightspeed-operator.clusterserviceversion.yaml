@@ -85,13 +85,13 @@ spec:
         name: lightspeed-tls
         version: v1
       - kind: ConfigMap
-        name: llama-stack-config
-        version: v1
-      - kind: ConfigMap
         name: mcp-config
         version: v1
       - kind: Secret
         name: metrics-reader-token
+        version: v1
+      - kind: ConfigMap
+        name: ogx-config
         version: v1
       - kind: PersistentVolumeClaim
         name: openstack-lightspeed-database
@@ -116,8 +116,8 @@ spec:
           standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.'
         displayName: Lightspeed Stack Log Level
         path: logging.lightspeedStackLogLevel
-      - description: Log level configuration for the OGX/llama-stack container. Supports
-          standard levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level"
+      - description: Log level configuration for the OGX container. Supports standard
+          levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level"
           (e.g., "core=debug,providers=info").
         displayName: OGX Log Level
         path: logging.ogxLogLevel

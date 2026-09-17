@@ -32,10 +32,10 @@ lightspeed-stack (engine) pod not becoming healthy
 .. code-block:: bash
 
    oc logs -n <namespace> deploy/lightspeed-stack-deployment -c lightspeed-service-api
-   oc logs -n <namespace> deploy/lightspeed-stack-deployment -c llama-stack
+   oc logs -n <namespace> deploy/lightspeed-stack-deployment -c ogx
 
 Usual causes: bad/unreachable ``llmEndpoint``, invalid ``apitoken``, or a
-missing ``tlsCACertBundle`` for a self-signed endpoint. llama-stack logs
+missing ``tlsCACertBundle`` for a self-signed endpoint. ogx logs
 the actual auth/TLS error from the provider.
 
 PostgreSQL pod not starting

@@ -130,8 +130,8 @@ func buildPostgresPodTemplateSpec(instance *apiv1beta1.OpenStackLightspeed) core
 			Value: PostgresLightspeedStackDbName,
 		},
 		{
-			Name:  "POSTGRESQL_LLAMA_STACK_DATABASE",
-			Value: PostgresLlamaStackDbName,
+			Name:  "POSTGRESQL_OGX_DATABASE",
+			Value: PostgresOGXDbName,
 		},
 		{
 			Name:  "POSTGRESQL_SHARED_BUFFERS",

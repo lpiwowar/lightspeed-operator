@@ -157,7 +157,7 @@ supported ``llmEndpointType`` values and everything else:
      tlsCACertBundle: openstack-lightspeed-certs # optional
 
 This deploys the full stack: the AI engine (lightspeed-stack and
-llama-stack/OGX), PostgreSQL, OKP, and the console plugin.
+OGX), PostgreSQL, OKP, and the console plugin.
 
 Verifying the deployment
 ---------------------------

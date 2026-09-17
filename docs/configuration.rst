@@ -81,8 +81,8 @@ Logging (``logging``)
      - Description
    * - ``logging.ogxLogLevel``
      - ``all=info``
-     - llama-stack/OGX container. Standard level, or
-       ``component=level`` pairs (e.g. ``core=debug,providers=info``).
+     - OGX container. Standard level, or ``component=level`` pairs
+       (e.g. ``core=debug,providers=info``).
    * - ``logging.lightspeedStackLogLevel``
      - ``INFO``
      - lightspeed-service-api container. ``DEBUG``/``INFO``/``WARNING``/``ERROR``/``CRITICAL``.
@@ -116,7 +116,7 @@ default entirely:
 
    spec:
      resources:
-       llamaStack:
+       ogx:
          requests: {cpu: "500m", memory: "2Gi"}
          limits: {cpu: "2", memory: "8Gi"}
        lightspeedService:

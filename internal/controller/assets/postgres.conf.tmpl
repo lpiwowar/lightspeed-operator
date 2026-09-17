@@ -2,10 +2,10 @@ huge_pages = off
 ssl = on
 ssl_cert_file = '/etc/certs/tls.crt'
 ssl_key_file = '/etc/certs/tls.key'
-# mTLS is not supported by lightspeed-stack or OGX (llama-stack) for the
-# database connection. Neither application supports presenting client certificates
-# (sslcert/sslkey) to PostgreSQL, so ssl_ca_file has no effect (even when pg_hba.conf
-# is correctly configured for mTLS)
+# mTLS is not supported by lightspeed-stack or OGX for the database connection.
+# Neither application supports presenting client certificates (sslcert/sslkey)
+# to PostgreSQL, so ssl_ca_file has no effect (even when pg_hba.conf is correctly
+# configured for mTLS)
 # ssl_ca_file = '<none>'
 logging_collector = off
 log_connections = on

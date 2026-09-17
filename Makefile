@@ -246,7 +246,6 @@ ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller
 ENVTEST_K8S_VERSION ?= $(shell go list -m -f "{{ .Version }}" k8s.io/api | awk -F'[v.]' '{printf "1.%d", $$3}')
 GOLANGCI_LINT_VERSION ?= v2.12.2
 
-
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
@@ -275,20 +274,22 @@ golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(GOLANGCI_LINT): $(LOCALBIN)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(LOCALBIN) $(GOLANGCI_LINT_VERSION)
 
+##@ Custom go-install-tool (modification from what's generated using operator-sdk)
+GO_VERSION := $(shell go version | cut -d' ' -f3)
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary
 # $2 - package url which can be installed
 # $3 - specific version of package
 define go-install-tool
-@[ -f "$(1)-$(3)" ] || { \
+@[ -f "$(1)-$(3)-$(GO_VERSION)" ] || { \
 set -e; \
 package=$(2)@$(3) ;\
 echo "Downloading $${package}" ;\
-rm -f $(1) || true ;\
-GOBIN=$(LOCALBIN) go install $${package} ;\
-mv $(1) $(1)-$(3) ;\
+rm -f $(1) $(1)-$(3)-* || true ;\
+GOBIN=$(LOCALBIN) GOTOOLCHAIN=$(GO_VERSION) go install $${package} ;\
+mv $(1) $(1)-$(3)-$(GO_VERSION) ;\
 } ;\
-ln -sf $(1)-$(3) $(1)
+ln -sf $(abspath $(1)-$(3)-$(GO_VERSION)) $(1)
 endef
 
 .PHONY: operator-sdk

@@ -53,7 +53,7 @@ Architecture
            Operator --> Pod
 
            subgraph Pod["lightspeed-stack pod"]
-               API[lightspeed-service-api] --> OGX[llama-stack]
+               API[lightspeed-service-api] --> OGX
                OGX -.-> MCP[MCP tools sidecar]
            end
        end
