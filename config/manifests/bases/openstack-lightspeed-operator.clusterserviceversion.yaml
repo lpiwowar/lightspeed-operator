@@ -97,6 +97,18 @@ spec:
         name: openstack-lightspeed-database
         version: v1
       specDescriptors:
+      - description: Log level for the PostgreSQL container. When set to DEBUG, enables
+          logging of all SQL statements (log_statement = all).
+        displayName: PostgreSQL Log Level
+        path: database.logLevel
+      - description: 'Log level for the dataverse exporter sidecar container. Supports
+          standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.'
+        displayName: Dataverse Exporter Log Level
+        path: dataverseExporter.logLevel
+      - description: 'Log level for the lightspeed-service-api container. Supports
+          standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.'
+        displayName: Lightspeed Stack Log Level
+        path: lcore.logLevel
       - description: |-
           Secret name containing API token for the LLMEndpoint. The secret must contain
           a field named "apitoken" which holds the token value.
@@ -108,26 +120,14 @@ spec:
       - description: Type of the provider serving the LLM
         displayName: Provider Type
         path: llmEndpointType
-      - description: 'Log level for the dataverse exporter sidecar container. Supports
-          standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.'
-        displayName: Dataverse Exporter Log Level
-        path: logging.dataverseExporterLogLevel
-      - description: 'Log level for the lightspeed-service-api container. Supports
-          standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.'
-        displayName: Lightspeed Stack Log Level
-        path: logging.lightspeedStackLogLevel
+      - description: Name of the model to use at the API endpoint provided in LLMEndpoint
+        displayName: Model Name
+        path: modelName
       - description: Log level configuration for the OGX container. Supports standard
           levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level"
           (e.g., "core=debug,providers=info").
         displayName: OGX Log Level
-        path: logging.ogxLogLevel
-      - description: Log level for the PostgreSQL container. When set to DEBUG, enables
-          logging of all SQL statements (log_statement = all).
-        displayName: PostgreSQL Log Level
-        path: logging.postgresLogLevel
-      - description: Name of the model to use at the API endpoint provided in LLMEndpoint
-        displayName: Model Name
-        path: modelName
+        path: ogx.logLevel
       - description: Configmap name containing a CA Certificates bundle
         displayName: TLS CA Certificate Bundle
         path: tlsCACertBundle
@@ -180,4 +180,6 @@ spec:
     name: operator
   - image: quay.io/openstack-lightspeed/rag-content:os-docs-2026.1-ogx
     name: rag-content
+  - image: quay.io/lightspeed-core/lightspeed-stack:dev-latest
+    name: ogx
   version: 0.0.0

@@ -41,11 +41,16 @@ var postgresConfigTmpl = template.Must(
 )
 
 func buildPostgresConfig(instance *apiv1beta1.OpenStackLightspeed) (string, error) {
+	logLevel := ""
+	if instance.Spec.Database != nil {
+		logLevel = instance.Spec.Database.LogLevel
+	}
+
 	var buf bytes.Buffer
 	err := postgresConfigTmpl.Execute(&buf, struct {
-		PostgresLogLevel string
+		LogLevel string
 	}{
-		PostgresLogLevel: instance.Spec.Logging.PostgresLogLevel,
+		LogLevel: logLevel,
 	})
 	if err != nil {
 		return "", err

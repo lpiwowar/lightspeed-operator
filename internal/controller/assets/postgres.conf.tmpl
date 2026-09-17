@@ -11,6 +11,6 @@ logging_collector = off
 log_connections = on
 log_disconnections = on
 log_lock_waits = on
-{{- if eq .PostgresLogLevel "DEBUG" }}
+{{- if eq .LogLevel "DEBUG" }}
 log_statement = all
 {{- end }}

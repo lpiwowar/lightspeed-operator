@@ -28,47 +28,53 @@ spec:
   llmProjectID: test-project-id-UPDATE
   llmDeploymentName: test-deployment-name-UPDATE
   llmAPIVersion: v1.1
-  feedbackEnabled: false
-  transcriptsEnabled: false
-  logging:
-    ogxLogLevel: "core=debug,providers=info"
-    lightspeedStackLogLevel: ERROR
-    dataverseExporterLogLevel: ERROR
-  resources:
-    ogx:
+  dataverseExporter:
+    feedback:
+      enabled: false
+    transcripts:
+      enabled: false
+    logLevel: ERROR
+  ogx:
+    logLevel: "core=debug,providers=info"
+    resources:
       requests:
         cpu: "500m"
         memory: "2Gi"
       limits:
         cpu: "2"
         memory: "9Gi"
-    lightspeedService:
+  lcore:
+    logLevel: ERROR
+    resources:
       requests:
         cpu: "250m"
         memory: "512Mi"
       limits:
         cpu: "1"
         memory: "3Gi"
-    postgres:
-      requests:
-        cpu: "30m"
-        memory: "300Mi"
-      limits:
-        cpu: "500m"
-        memory: "3Gi"
-    okp:
-      requests:
-        cpu: "500m"
-        memory: "2Gi"
-      limits:
-        cpu: "2"
-        memory: "5Gi"
-    consolePlugin:
+  console:
+    resources:
       requests:
         cpu: "50m"
         memory: "64Mi"
       limits:
         cpu: "200m"
         memory: "300Mi"
+  database:
+    resources:
+      requests:
+        cpu: "30m"
+        memory: "300Mi"
+      limits:
+        cpu: "500m"
+        memory: "3Gi"
+  okp:
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "5Gi"
   dev:
     okpChunkFilterQuery: "product:(*openstack* OR *openshift*)"

@@ -458,9 +458,52 @@ spec:
   llmProjectID: test-project-id
   llmDeploymentName: test-deployment-name
   llmAPIVersion: v1
-  logging:
-    ogxLogLevel: DEBUG
-    lightspeedStackLogLevel: WARNING
+  console:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+  database:
+    logLevel: INFO
+    resources:
+      limits:
+        cpu: 500m
+        memory: 2Gi
+      requests:
+        cpu: 30m
+        memory: 300Mi
+  dataverseExporter:
+    logLevel: DEBUG
+  lcore:
+    logLevel: WARNING
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  ogx:
+    logLevel: DEBUG
+    resources:
+      limits:
+        cpu: "2"
+        memory: 8Gi
+      requests:
+        cpu: 500m
+        memory: 2Gi
+  okp:
+    offline: true
+    resources:
+      limits:
+        cpu: "2"
+        memory: 4Gi
+      requests:
+        cpu: 500m
+        memory: 2Gi
 status:
   conditions:
     - type: Ready

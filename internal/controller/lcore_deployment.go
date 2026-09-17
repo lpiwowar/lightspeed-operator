@@ -64,9 +64,14 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 	ogxMounts = append(ogxMounts, sharedMounts...)
 	ogxMounts = append(ogxMounts, ogxCacheMounts...)
 
+	ogxResources := corev1.ResourceRequirements{}
+	if instance.Spec.OGX != nil {
+		ogxResources = instance.Spec.OGX.Resources
+	}
+
 	ogxContainer := corev1.Container{
 		Name:         "ogx",
-		Image:        apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
+		Image:        instance.OGXContainerImage(),
 		Command:      []string{"ogx", "run", "--insecure", VectorDBVolumeOGXConfigPath},
 		Ports:        []corev1.ContainerPort{{Name: "ogx", ContainerPort: OGXContainerPort}},
 		VolumeMounts: ogxMounts,
@@ -104,7 +109,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 			TimeoutSeconds:   OGXProbeTimeoutSeconds,
 			FailureThreshold: OGXProbeFailureThreshold,
 		},
-		Resources:       instance.Spec.Resources.OGX,
+		Resources:       ogxResources,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	}
 
@@ -130,9 +135,14 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 		})
 	}
 
+	lightspeedResources := corev1.ResourceRequirements{}
+	if instance.Spec.LCore != nil {
+		lightspeedResources = instance.Spec.LCore.Resources
+	}
+
 	lightspeedStackContainer := corev1.Container{
 		Name:            "lightspeed-service-api",
-		Image:           apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
+		Image:           instance.LightspeedContainerImage(),
 		Args:            []string{"-c", VectorDBVolumeLightspeedStackConfigPath},
 		Ports:           []corev1.ContainerPort{{Name: "https", ContainerPort: OpenStackLightspeedAppServerContainerPort}},
 		VolumeMounts:    lightspeedStackMounts,
@@ -140,7 +150,7 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 		StartupProbe:    buildLightspeedStackStartupProbe(),
 		LivenessProbe:   buildLightspeedStackLivenessProbe(),
 		ReadinessProbe:  buildLightspeedStackReadinessProbe(),
-		Resources:       instance.Spec.Resources.LightspeedService,
+		Resources:       lightspeedResources,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	}
 	containers := []corev1.Container{ogxContainer, lightspeedStackContainer}
@@ -149,12 +159,12 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 	if dataCollectionEnabled {
 		exporterContainer := corev1.Container{
 			Name:            DataverseExporterContainerName,
-			Image:           apiv1beta1.OpenStackLightspeedDefaultValues.ExporterImageURL,
+			Image:           instance.ExporterContainerImage(),
 			ImagePullPolicy: corev1.PullAlways,
 			Args: []string{
 				"--mode", "openshift",
 				"--config", path.Join(ExporterConfigMountPath, ExporterConfigFilename),
-				"--log-level", instance.Spec.Logging.DataverseExporterLogLevel,
+				"--log-level", dataverseExporterLogLevel(instance),
 				"--data-dir", LCoreUserDataMountPath,
 			},
 			VolumeMounts: []corev1.VolumeMount{
@@ -198,9 +208,20 @@ func buildLCorePodTemplateSpec(ctx context.Context, h *common_helper.Helper, ins
 
 		mcpContainer := corev1.Container{
 			Name:         "rhoso-mcps",
-			Image:        apiv1beta1.OpenStackLightspeedDefaultValues.MCPServerImageURL,
+			Image:        instance.MCPContainerImage(),
 			VolumeMounts: mcpMounts,
-			Resources:    instance.Spec.Resources.MCP,
+			Resources:    getRhosMCPResources(instance),
+			StartupProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: MCPServerHealthPath,
+						Port: intstr.FromInt32(MCPServerPort),
+					},
+				},
+				PeriodSeconds:    MCPServerProbePeriodSeconds,
+				TimeoutSeconds:   MCPServerProbeTimeoutSeconds,
+				FailureThreshold: MCPServerStartupProbeFailureThreshold,
+			},
 			LivenessProbe: &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
@@ -267,7 +288,7 @@ func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed, initResources
 	var containers []corev1.Container
 	containers = append(containers, corev1.Container{
 		Name:  "vector-database-collect",
-		Image: apiv1beta1.OpenStackLightspeedDefaultValues.RAGImageURL,
+		Image: instance.RAGContainerImage(),
 		Command: []string{
 			"sh", VectorDBScriptsMountPath + "/" + VectorDBCollectScriptKey,
 			"--vector-db-path", VectorDBVolumeMountPath,
@@ -294,14 +315,14 @@ func buildInitContainers(instance *apiv1beta1.OpenStackLightspeed, initResources
 		"--ogx-config-path", OGXConfigInitContainerMountPath,
 		"--lightspeed-stack-path", LightspeedStackInitContainerMountPath,
 	}
-	devConfig, _ := parseDevConfig(instance)
+	devConfig, _ := instance.ParseDevConfig()
 	if devConfig.OKPRagOnly == nil || *devConfig.OKPRagOnly {
 		configBuildCmd = append(configBuildCmd, "--disable-rag-entries")
 	}
 
 	containers = append(containers, corev1.Container{
 		Name:            "vector-database-config-build",
-		Image:           apiv1beta1.OpenStackLightspeedDefaultValues.LCoreImageURL,
+		Image:           instance.LightspeedContainerImage(),
 		Command:         configBuildCmd,
 		SecurityContext: securityContext,
 		Resources:       initResources,
@@ -693,7 +714,7 @@ func buildLightspeedStackEnvVars(instance *apiv1beta1.OpenStackLightspeed) []cor
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "LIGHTSPEED_STACK_LOG_LEVEL",
-			Value: instance.Spec.Logging.LightspeedStackLogLevel,
+			Value: getLightspeedLogLevel(instance),
 		},
 	}
 	envVars = append(envVars, corev1.EnvVar{
@@ -772,12 +793,27 @@ func buildLightspeedStackReadinessProbe() *corev1.Probe {
 	}
 }
 
+// getLightspeedLogLevel returns the log level for the lightspeed-service-api container.
+// Defaults to "INFO" when unset.
+func getLightspeedLogLevel(instance *apiv1beta1.OpenStackLightspeed) string {
+	if instance.Spec.LCore != nil && instance.Spec.LCore.LogLevel != "" {
+		return instance.Spec.LCore.LogLevel
+	}
+	return "INFO"
+}
+
 // getOGXLogLevel returns the log level for OGX container.
 // Supports either standard levels (INFO, DEBUG, WARNING, ERROR, CRITICAL) or fine-grained control.
 // Examples: "INFO" -> "all=info", "DEBUG" -> "all=debug", "core=debug,providers=info" -> "core=debug,providers=info"
 // Defaults to "all=info" if not specified.
 func getOGXLogLevel(instance *apiv1beta1.OpenStackLightspeed) string {
-	logLevel := instance.Spec.Logging.OGXLogLevel
+	logLevel := ""
+	if instance.Spec.OGX != nil {
+		logLevel = instance.Spec.OGX.LogLevel
+	}
+	if logLevel == "" {
+		return "all=info"
+	}
 
 	// If it's a simple level (INFO, DEBUG, etc.), convert to "all=<level>" format
 	// Otherwise, pass through for fine-grained control (e.g., "core=debug,providers=info")

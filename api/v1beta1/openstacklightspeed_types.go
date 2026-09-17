@@ -32,6 +32,9 @@ const (
 	// LCoreContainerImage is the fall-back container image for LCore
 	LCoreContainerImage = "quay.io/lightspeed-core/lightspeed-stack:dev-latest"
 
+	// OGXContainerImage is the fall-back container image for OGX/llama-stack
+	OGXContainerImage = LCoreContainerImage
+
 	// ExporterContainerImage is the fall-back container image for the Dataverse Exporter
 	ExporterContainerImage = "quay.io/lightspeed-core/lightspeed-to-dataverse-exporter:latest"
 
@@ -55,18 +58,34 @@ const (
 )
 
 // DevSpec is the internal structure for the Dev field. Not exposed in the CRD.
+// This means that there are no sub-schemas and no defaults, so all fields need to get defaults from functions.
+// For example for rhosMCP.resources we get them from the `defaultRhosMCPResources` in common.go
 // May change at any time without backward compatibility.
 //
 // Supported fields:
 //   - featureFlags: list of experimental feature flags to enable. Configuration options for experimental features must also live within the `DevSpec`.
 //   - okpChunkFilterQuery: Solr filter query for OKP searches (default: version-aware query combining detected OpenStack and OCP versions)
 //   - okpRagOnly: when true, only OKP is used as a RAG source (default: true)
-//   - rhosMCPConfig: custom YAML configuration for the rhos-mcps service; deep-merged on top of the operator defaults, openstack.enabled and openshift.enabled are always overridden by the operator
+//   - rhosMCP: configuration for the rhos-mcps sidecar (resources, container image override, and custom YAML config); config is deep-merged on top of the operator defaults, openstack.enabled and openshift.enabled are always overridden by the operator
 type DevSpec struct {
 	FeatureFlags        []string `json:"featureFlags,omitempty"`
 	OKPChunkFilterQuery string   `json:"okpChunkFilterQuery,omitempty"`
 	OKPRagOnly          *bool    `json:"okpRagOnly,omitempty"`
-	RhosMCPConfig       string   `json:"rhosMCPConfig,omitempty"`
+	// rhosMCP configures the rhos-mcps sidecar container (only used when the rhoso_mcps feature flag is enabled).
+	RhosMCP *RhosMCPSpec `json:"rhosMCP,omitempty"`
+}
+
+// RhosMCPSpec defines configuration for the rhos-mcps sidecar container.
+type RhosMCPSpec struct {
+	// +kubebuilder:default:={requests: {cpu: "50m", memory: "300Mi"}, limits: {memory: "500Mi"}}
+	// Resources sets compute resources for the rhos-mcps sidecar container.
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// Config is a YAML string that overrides the default configuration (file internal/controller/assets/mcp_server_config.yaml.tmpl) for the rhos-mcps service.
+	Config string `json:"config,omitempty"`
+
+	// ContainerImage overrides the rhos-mcps container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // OKPSpec defines configuration for the Offline Knowledge Portal (OKP).
@@ -83,6 +102,35 @@ type OKPSpec struct {
 	// The secret must contain a key named "access_key".
 	// An access key can be obtained from https://access.redhat.com/offline/access
 	AccessKey string `json:"accessKey,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={requests: {cpu: "500m", memory: "2Gi"}, limits: {cpu: "2", memory: "4Gi"}}
+	// Resources sets compute resources for the Offline Knowledge Portal container.
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the OKP container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
+}
+
+// OGXSpec defines configuration for the OGX container.
+type OGXSpec struct {
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={requests: {cpu: "500m", memory: "2Gi"}, limits: {cpu: "2", memory: "8Gi"}}
+	// Resources sets compute resources for the OGX container
+	// in the lightspeed-stack deployment.
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default="all=info"
+	// +kubebuilder:validation:Pattern=`^\w+(?:=\w+)?(?:,\w+(?:=\w+)?)*$`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OGX Log Level"
+	// Log level configuration for the OGX container. Supports standard levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level" (e.g., "core=debug,providers=info").
+	LogLevel string `json:"logLevel,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the OGX/llama-stack container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // DatabaseSpec defines configuration for persistent PostgreSQL storage.
@@ -95,46 +143,62 @@ type DatabaseSpec struct {
 	// StorageClass name for the PersistentVolumeClaim. If omitted, the cluster's
 	// default StorageClass is used.
 	Class string `json:"class,omitempty"`
-}
-
-// ContainerResourcesSpec defines resource requirements for each container
-// managed by the operator. Defaults are applied by the API server via
-// kubebuilder markers. Users may override any container's resources in
-// the CR; the provided value replaces the default entirely.
-type ContainerResourcesSpec struct {
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:={requests: {cpu: "500m", memory: "2Gi"}, limits: {cpu: "2", memory: "8Gi"}}
-	// OGX sets compute resources for the OGX container
-	// in the lightspeed-stack deployment.
-	OGX corev1.ResourceRequirements `json:"ogx,omitempty"`
-
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:={requests: {cpu: "250m", memory: "512Mi"}, limits: {cpu: "1", memory: "2Gi"}}
-	// LightspeedService sets compute resources for the lightspeed-service-api
-	// container in the lightspeed-stack deployment.
-	LightspeedService corev1.ResourceRequirements `json:"lightspeedService,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={requests: {cpu: "30m", memory: "300Mi"}, limits: {cpu: "500m", memory: "2Gi"}}
-	// Postgres sets compute resources for the PostgreSQL container.
-	Postgres corev1.ResourceRequirements `json:"postgres,omitempty"`
+	// Rarources sets compute resources for the PostgreSQL container.
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:={requests: {cpu: "500m", memory: "2Gi"}, limits: {cpu: "2", memory: "4Gi"}}
-	// OKP sets compute resources for the Offline Knowledge Portal container.
-	OKP corev1.ResourceRequirements `json:"okp,omitempty"`
+	// +kubebuilder:validation:Enum=DEBUG;INFO
+	// +kubebuilder:default="INFO"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="PostgreSQL Log Level"
+	// Log level for the PostgreSQL container. When set to DEBUG, enables logging of all SQL statements (log_statement = all).
+	LogLevel string `json:"logLevel,omitempty"`
 
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the PostgreSQL container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
+}
+
+// ConsoleSpec defines configuration for the lightspeed console plugin.
+type ConsoleSpec struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={requests: {cpu: "50m", memory: "64Mi"}, limits: {cpu: "200m", memory: "256Mi"}}
-	// ConsolePlugin sets compute resources for the lightspeed-console-plugin
+	// Resources sets compute resources for the lightspeed-console-plugin
 	// container and its init container.
-	ConsolePlugin corev1.ResourceRequirements `json:"consolePlugin,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:={requests: {cpu: "50m", memory: "300Mi"}, limits: {memory: "500Mi"}}
-	// MCP sets compute resources for the RHOSO MCP server sidecar container
-	// (only created when the rhoso_mcps feature flag is enabled).
-	MCP corev1.ResourceRequirements `json:"mcp,omitempty"`
+	// ContainerImage overrides the console plugin container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
+}
+
+// LCoreSpec defines configuration for the lightspeed-service-api container.
+type LCoreSpec struct {
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={requests: {cpu: "250m", memory: "512Mi"}, limits: {cpu: "1", memory: "2Gi"}}
+	// Resources sets compute resources for the lightspeed-service-api
+	// container in the lightspeed-stack deployment.
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=DEBUG;INFO;WARNING;ERROR;CRITICAL
+	// +kubebuilder:default="INFO"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Lightspeed Stack Log Level"
+	// Log level for the lightspeed-service-api container. Supports standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+	LogLevel string `json:"logLevel,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the lightspeed-service-api container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
+}
+
+// RAG defines configuration for the RAG vector database init container.
+type RAG struct {
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the RAG init-container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // QuotaLimiterSpec defines a single quota limiter enforced by lightspeed-stack.
@@ -208,6 +272,7 @@ type OpenStackLightspeedSpec struct {
 	OpenStackLightspeedCore `json:",inline"`
 
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={}
 	// Database configures persistent storage for PostgreSQL data.
 	// A PersistentVolumeClaim is always created and mounted; when Database
 	// is omitted, the default size is used and the cluster's default
@@ -215,6 +280,7 @@ type OpenStackLightspeedSpec struct {
 	Database *DatabaseSpec `json:"database,omitempty"`
 
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={}
 	// OKP configures the Offline Knowledge Portal (OKP) RAG source.
 	OKP *OKPSpec `json:"okp,omitempty"`
 
@@ -224,49 +290,52 @@ type OpenStackLightspeedSpec struct {
 	Quotas *QuotaSpec `json:"quotas,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:={}
-	// Resources configures compute resource requirements for individual
-	// containers managed by the operator. Each field has sensible defaults
-	// applied by the API server. Override any container's resources to
-	// replace its defaults entirely.
-	Resources ContainerResourcesSpec `json:"resources,omitempty"`
-
-	// +kubebuilder:validation:Optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Dev contains developer/experimental configuration.
 	// This section is not part of the stable API and may change at any time without backward compatibility.
 	Dev runtime.RawExtension `json:"dev,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={}
+	// Console configures the lightspeed console plugin.
+	Console *ConsoleSpec `json:"console,omitempty"`
 }
 
-// LoggingConfig defines logging configuration for OpenStackLightspeed components
-type LoggingConfig struct {
+// DataverseExporterFeedback defines feedback collection configuration for the dataverse exporter.
+type DataverseExporterFeedback struct {
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default="all=info"
-	// +kubebuilder:validation:Pattern=`^\w+(?:=\w+)?(?:,\w+(?:=\w+)?)*$`
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="OGX Log Level"
-	// Log level configuration for the OGX container. Supports standard levels (INFO, DEBUG) or fine-grained control using format "component=level,component=level" (e.g., "core=debug,providers=info").
-	OGXLogLevel string `json:"ogxLogLevel,omitempty"`
+	// +kubebuilder:default=true
+	// Enable feedback collection.
+	Enabled *bool `json:"enabled,omitempty"`
+}
 
+// DataverseExporterTranscripts defines conversation transcript collection configuration for the dataverse exporter.
+type DataverseExporterTranscripts struct {
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum=DEBUG;INFO;WARNING;ERROR;CRITICAL
-	// +kubebuilder:default="INFO"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Lightspeed Stack Log Level"
-	// Log level for the lightspeed-service-api container. Supports standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
-	LightspeedStackLogLevel string `json:"lightspeedStackLogLevel,omitempty"`
+	// Enable conversation transcripts collection.
+	Enabled bool `json:"enabled,omitempty"`
+}
 
+// DataverseExporter defines configuration for the dataverse exporter sidecar.
+type DataverseExporter struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=DEBUG;INFO;WARNING;ERROR;CRITICAL
 	// +kubebuilder:default="INFO"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Dataverse Exporter Log Level"
 	// Log level for the dataverse exporter sidecar container. Supports standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
-	DataverseExporterLogLevel string `json:"dataverseExporterLogLevel,omitempty"`
+	LogLevel string `json:"logLevel,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum=DEBUG;INFO
-	// +kubebuilder:default="INFO"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="PostgreSQL Log Level"
-	// Log level for the PostgreSQL container. When set to DEBUG, enables logging of all SQL statements (log_statement = all).
-	PostgresLogLevel string `json:"postgresLogLevel,omitempty"`
+	// Feedback configures user feedback collection.
+	Feedback *DataverseExporterFeedback `json:"feedback,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// Transcripts configures conversation transcript collection.
+	Transcripts *DataverseExporterTranscripts `json:"transcripts,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// ContainerImage overrides the dataverse exporter sidecar container image. When unset, the operator default is used.
+	ContainerImage string `json:"containerImage,omitempty"`
 }
 
 // OpenStackLightspeedCore defines the desired state of OpenStackLightspeed
@@ -317,18 +386,24 @@ type OpenStackLightspeedCore struct {
 	LLMAPIVersion string `json:"llmAPIVersion,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default=true
-	// Enable feedback collection
-	FeedbackEnabled *bool `json:"feedbackEnabled,omitempty"`
+	// +kubebuilder:default:={}
+	// DataverseExporter configures the dataverse exporter sidecar (feedback, transcripts, logging).
+	DataverseExporter *DataverseExporter `json:"dataverseExporter,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// Enable conversation transcripts collection
-	TranscriptsEnabled bool `json:"transcriptsEnabled,omitempty"`
+	// +kubebuilder:default:={}
+	// OGX configures the OGX container.
+	OGX *OGXSpec `json:"ogx,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default={}
-	// Logging configuration for OpenStackLightspeed components
-	Logging LoggingConfig `json:"logging"`
+	// +kubebuilder:default:={}
+
+	// LCore configures the lightspeed-service-api container.
+	LCore *LCoreSpec `json:"lcore,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// RAG configures the RAG vector database init container.
+	RAG *RAG `json:"rag,omitempty"`
 }
 
 // OpenStackLightspeedStatus defines the observed state of OpenStackLightspeed
@@ -409,6 +484,7 @@ func (instance OpenStackLightspeed) IsReady() bool {
 type OpenStackLightspeedDefaults struct {
 	RAGImageURL          string
 	LCoreImageURL        string
+	OGXImageURL          string
 	ExporterImageURL     string
 	PostgresImageURL     string
 	ConsoleImageURL      string
@@ -431,6 +507,8 @@ func SetupDefaults() {
 			"RELATED_IMAGE_OPENSTACK_LIGHTSPEED_IMAGE_URL_DEFAULT", OpenStackLightspeedContainerImage),
 		LCoreImageURL: util.GetEnvVar(
 			"RELATED_IMAGE_LCORE_IMAGE_URL_DEFAULT", LCoreContainerImage),
+		OGXImageURL: util.GetEnvVar(
+			"RELATED_IMAGE_OGX_IMAGE_URL_DEFAULT", OGXContainerImage),
 		ExporterImageURL: util.GetEnvVar(
 			"RELATED_IMAGE_EXPORTER_IMAGE_URL_DEFAULT", ExporterContainerImage),
 		PostgresImageURL: util.GetEnvVar(

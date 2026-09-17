@@ -20,13 +20,4 @@ spec:
   dataverseExporter:
     logLevel: DEBUG
   dev:
-    featureFlags:
-      - rhoso_mcps
-    rhosMCP:
-      containerImage: quay.io/openstack-lightspeed/lightspeed-mcps:latest
-      config: |
-        openstack:
-          enabled: true
-          allow_write: true
-        openshift:
-          enabled: false
+    featureFlags: []

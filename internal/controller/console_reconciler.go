@@ -160,8 +160,9 @@ func consoleImageForVersion(version string) string {
 	return apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImagePF5URL
 }
 
-// resolveConsoleImage selects the console plugin image based on OCP cluster version.
-func resolveConsoleImage(ctx context.Context, h *common_helper.Helper) string {
+// resolveConsoleImage selects the console plugin image based on OCP cluster version
+// and optional spec.console.containerImage override.
+func resolveConsoleImage(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) string {
 	logger := h.GetLogger()
 
 	version, err := DetectOCPVersion(ctx, h)
@@ -169,9 +170,12 @@ func resolveConsoleImage(ctx context.Context, h *common_helper.Helper) string {
 		logger.Info("Failed to detect OCP version for console image, using default", "error", err)
 	}
 
-	image := consoleImageForVersion(version)
+	ocpDefault := consoleImageForVersion(version)
+	image := instance.ConsoleContainerImage(ocpDefault)
 
-	if image == apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL {
+	if instance.Spec.Console != nil && instance.Spec.Console.ContainerImage != "" {
+		logger.Info("Using console image from spec override", "image", image)
+	} else if image == apiv1beta1.OpenStackLightspeedDefaultValues.ConsoleImageURL {
 		logger.Info("OCP >= 4.19, using PatternFly 6 console image", "version", version)
 	} else {
 		logger.Info("Using PatternFly 5 console image", "version", version)
@@ -184,7 +188,7 @@ func resolveConsoleImage(ctx context.Context, h *common_helper.Helper) string {
 func reconcileConsoleDeploymentResource(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
-	consoleImage := resolveConsoleImage(ctx, h)
+	consoleImage := resolveConsoleImage(ctx, h, instance)
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{

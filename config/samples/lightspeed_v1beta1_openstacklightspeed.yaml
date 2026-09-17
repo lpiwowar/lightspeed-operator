@@ -11,38 +11,52 @@ spec:
   llmCredentials: openstack-lightspeed-apitoken
   modelName: llama3.1:8b
   tlsCACertBundle: openstack-lightspeed-certs
+  # Uncomment to override container images (falls back to operator defaults when unset):
+  # rag:
+  #   containerImage: quay.io/openstack-lightspeed/rag-content:os-docs-2026.1-ogx
   # Uncomment to customize persistent PostgreSQL storage:
   # database:
   #   size: "5Gi"
   #   class: "my-storage-class"
-  # Uncomment to customize container resource requests/limits:
-  # resources:
-  #   llamaStack:
-  #     requests:
-  #       cpu: "500m"
-  #       memory: "2Gi"
-  #     limits:
-  #       cpu: "2"
-  #       memory: "8Gi"
-  #   lightspeedService:
-  #     requests:
-  #       cpu: "250m"
-  #       memory: "512Mi"
-  #     limits:
-  #       cpu: "1"
-  #       memory: "2Gi"
-  #   postgres:
+  #   resources:
   #     requests:
   #       cpu: "30m"
   #       memory: "300Mi"
   #     limits:
   #       cpu: "500m"
   #       memory: "2Gi"
-  # Uncomment to customize log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL):
-  # logging:
-  #   ogxLogLevel: "all=info"
-  #   lightspeedStackLogLevel: "INFO"
-  #   dataverseExporterLogLevel: "INFO"
+  #   logLevel: "INFO"
+  #   containerImage: quay.io/sclorg/postgresql-16-c10s:latest
+  # Uncomment to customize OGX/llama-stack container resources and log level:
+  # ogx:
+  #   resources:
+  #     requests:
+  #       cpu: "500m"
+  #       memory: "2Gi"
+  #     limits:
+  #       cpu: "2"
+  #       memory: "8Gi"
+  #   logLevel: "all=info"
+  #   containerImage: quay.io/lightspeed-core/lightspeed-stack:dev-latest
+  # Uncomment to customize lightspeed-service-api container resources and log level:
+  # lcore:
+  #   resources:
+  #     requests:
+  #       cpu: "250m"
+  #       memory: "512Mi"
+  #     limits:
+  #       cpu: "1"
+  #       memory: "2Gi"
+  #   logLevel: "INFO"
+  #   containerImage: quay.io/lightspeed-core/lightspeed-stack:dev-latest
+  # Uncomment to customize dataverse exporter configuration:
+  # dataverseExporter:
+  #   logLevel: "INFO"
+  #   feedback:
+  #     enabled: true
+  #   transcripts:
+  #     enabled: false
+  #   containerImage: quay.io/lightspeed-core/lightspeed-to-dataverse-exporter:latest
   # Uncomment to enable RHOSO MCPs (MCP server sidecar with OpenStack/OpenShift tools)
   # dev:
   #   featureFlags:
@@ -51,11 +65,37 @@ spec:
   #   okpRagOnly: true
   #   # Custom MCP server config (deep-merged with operator defaults;
   #   # openstack.enabled and openshift.enabled are always overridden):
-  #   rhosMCPConfig: |
-  #     debug: true
-  #     workers: 4
+  #   rhosMCP:
+  #     config: |
+  #       debug: true
+  #       workers: 4
+  #     resources:
+  #       requests:
+  #         cpu: "50m"
+  #         memory: "64Mi"
+  #       limits:
+  #         memory: "200Mi"
+  #     containerImage: quay.io/openstack-lightspeed/lightspeed-mcps:latest
   # okp:
   #   accessKey: okp-access-key-secret
+  #   offline: true
+  #   resources:
+  #     requests:
+  #       cpu: "500m"
+  #       memory: "2Gi"
+  #     limits:
+  #       cpu: "2"
+  #       memory: "4Gi"
+  #   containerImage: registry.redhat.io/offline-knowledge-portal/rhokp-rhel9:latest
+  # console:
+  #   resources:
+  #     requests:
+  #       cpu: "50m"
+  #       memory: "256Mi"
+  #     limits:
+  #       cpu: "1"
+  #       memory: "2Gi"
+  #   containerImage: registry.redhat.io/openshift-lightspeed/lightspeed-console-plugin-rhel9:1.0.12
   # Uncomment to enable quota enforcement (opt-in; omit or leave limiters empty to disable):
   # quotas:
   #   limiters:

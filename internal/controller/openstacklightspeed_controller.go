@@ -222,7 +222,7 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	// Log dev config parse errors so misconfigurations don't silently disable features.
-	if _, err := parseDevConfig(instance); err != nil {
+	if _, err := instance.ParseDevConfig(); err != nil {
 		Log.Error(err, "failed to parse dev config, ignoring")
 	}
 
