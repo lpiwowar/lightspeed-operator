@@ -30,6 +30,8 @@
       # Uncomment and provide valid PEM cert when testing with real LLM endpoint
 
       # cifmw_openstack_lightspeed_ca_cert: "dummy-cert-for-ci"
+      cifmw_os_must_gather_additional_namespaces: "openstack-lightspeed"
+      cifmw_os_must_gather_omc: false
 
 - job:
     name: lightspeed-operator-kuttl
@@ -51,3 +53,5 @@
     vars:
       cifmw_kuttl_tests_operator_list:
         - openstack_lightspeed
+      cifmw_os_must_gather_additional_namespaces: "openstack-lightspeed"
+      cifmw_os_must_gather_omc: false
