@@ -38,6 +38,10 @@ metadata:
 spec:
   template:
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: lightspeed-postgres-server
           resources:
@@ -68,6 +72,10 @@ metadata:
 spec:
   template:
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: okp
           resources:
@@ -77,6 +85,11 @@ spec:
             limits:
               cpu: "2"
               memory: 5Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
 
 # LCore resources
 ---
@@ -113,9 +126,25 @@ metadata:
 spec:
   template:
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: vector-database-collect
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
         - name: vector-database-config-build
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
       containers:
         - name: ogx
           resources:
@@ -162,6 +191,8 @@ spec:
               mountPath: /vector-db-discovered-values
             - name: ogx-cache
               mountPath: /tmp/ogx
+            - name: tmp-writable-volume
+              mountPath: /tmp
         - name: lightspeed-service-api
           resources:
             requests:
@@ -198,6 +229,8 @@ spec:
               readOnly: true
             - name: vector-db-discovered-values
               mountPath: /vector-db-discovered-values
+            - name: tmp-writable-volume
+              mountPath: /tmp
             - name: tls-certs
               mountPath: /etc/certs/lightspeed-tls
               readOnly: true
@@ -217,6 +250,8 @@ spec:
         - name: vector-db-discovered-values
           emptyDir: {}
         - name: ogx-cache
+          emptyDir: {}
+        - name: tmp-writable-volume
           emptyDir: {}
         - name: tls-certs
           secret:
@@ -277,8 +312,18 @@ metadata:
 spec:
   template:
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: rewrite-locales
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           resources:
             requests:
               cpu: 50m
@@ -291,6 +336,12 @@ spec:
               mountPath: /locales-rewrite
       containers:
         - name: lightspeed-console-plugin
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           resources:
             requests:
               cpu: 50m
