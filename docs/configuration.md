@@ -9,7 +9,7 @@ field in its `spec`.
 | Field | Required | Description |
 |-------|----------|-------------|
 | `llmEndpoint` | Yes | URL of the LLM endpoint (e.g. `https://api.openai.com/v1`). Must start with `http://` or `https://`. |
-| `llmEndpointType` | Yes | Provider type. See {ref}`supported-providers`. |
+| `llmEndpointType` | Yes | Provider type. See [supported providers](configuration.md#supported-providers). |
 | `modelName` | Yes | Model name to use at `llmEndpoint`. |
 | `llmCredentials` | Yes | `Secret` name (same namespace) with the API token under key `apitoken`. |
 | `tlsCACertBundle` | No | `ConfigMap` name (same namespace) with a CA bundle for the LLM endpoint. |
@@ -18,8 +18,7 @@ field in its `spec`.
 | `llmDeploymentName` | No | Required by some providers (e.g. Azure OpenAI). |
 | `llmAPIVersion` | No | Required by some providers (e.g. Azure OpenAI). |
 
-(supported-providers)=
-## Supported LLM providers (`llmEndpointType`)
+## Supported providers
 
 - `openai` — OpenAI-compatible endpoints (Ollama, vLLM, etc.)
 - `azure_openai` — Azure OpenAI (needs `llmDeploymentName`, `llmAPIVersion`)
@@ -42,8 +41,7 @@ field in its `spec`.
 | `dataverseExporter.logLevel` | `INFO` | Feedback/transcript exporter sidecar. Same values as above. |
 | `database.logLevel` | `INFO` | PostgreSQL container. `DEBUG` also logs every SQL statement. |
 
-(data-collection)=
-## Feedback and transcripts (`dataverseExporter`)
+## Data collection
 
 ```yaml
 spec:
@@ -55,8 +53,7 @@ spec:
 ```
 
 `feedback.enabled` records thumbs-up/down responses. `transcripts.enabled`
-records full conversations. Both are sent by the Dataverse exporter sidecar;
-set either to `false` if it does not fit your data policy.
+records full conversations. Both are sent by the Dataverse exporter sidecar.
 
 ## Persistent storage (`database`)
 
@@ -109,15 +106,20 @@ Each managed workload can use a custom image. Set `containerImage` under the
 relevant component: `rag`, `ogx`, `lcore`, `database`, `dataverseExporter`,
 `okp`, or `console`; for the optional MCP sidecar use
 `dev.rhosMCP.containerImage`. When omitted, the operator uses its configured
-default image.
+default image. For example, to configure LCORE container image:
 
-(offline-knowledge-portal)=
-## Offline Knowledge Portal (`okp`)
+```yaml
+spec:
+  lcore:
+    containerImage: quay.io/<custom-org>/<custom-image-name>:<tag>
+```
+
+## Offline knowledge portal
 
 > [!IMPORTANT]
 > OKP is deployed on **every** install — `spec.okp` configures it, it
 > doesn't gate whether it's deployed. Pulling its image needs the same
-> free `registry.redhat.io` account as {ref}`redhat-registry-access`.
+> free `registry.redhat.io` account described in the [installation guide](install_guide.md#access-to-registry-images).
 
 ```yaml
 spec:
@@ -144,8 +146,7 @@ By default, **RAG grounding is OKP-only** — the bundled community
 documentation is disabled unless you set `dev.okpRagOnly: false` (below).
 
 
-(quota-enforcement)=
-## Quota enforcement (`quotas`)
+## Quota enforcement
 
 Configure one or more limiters to enable token quota enforcement. The
 operator uses its managed PostgreSQL instance for quota storage. Omitting
@@ -224,7 +225,7 @@ spec:
   OpenShift/RHOSO versions instead of using the literal example above.
 - `rhoso_mcps` — the one flag that does need to be set. Deploys the MCP
   introspection sidecar, which is read-only **by default**. See
-  {doc}`usage`.
+  [Usage](usage.md).
 - `rhosMCP` configures the MCP sidecar. Its `config` value is deep-merged
   on top of the operator's defaults and can override anything they set,
   including the `allow_write` flags that keep introspection read-only. Only
