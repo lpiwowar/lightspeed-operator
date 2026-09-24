@@ -59,7 +59,8 @@ Failed to pull image "registry.redhat.io/...": unauthorized: Please login to the
 ```
 
 Means the pull secret is missing `registry.redhat.io` credentials — see
-{ref}`redhat-registry-access` to fix and verify with Podman.
+{ref}`redhat-registry-access` to fix and verify with the documented `oc run`
+test.
 
 ### CA bundle errors
 
