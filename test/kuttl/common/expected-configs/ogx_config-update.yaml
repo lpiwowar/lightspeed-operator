@@ -32,9 +32,9 @@ providers:
     provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
   - config:
-      api_token: ${env.OPENSTACK_LIGHTSPEED_PROVIDER_API_KEY}
+      api_token: ${env.PROVIDER_DEFAULT_MODEL_API_KEY}
       base_url: http://mock-llm-api-server-pod-UPDATE:8000/v1
-    provider_id: openstack-lightspeed-provider
+    provider_id: provider-default-model
     provider_type: remote::vllm
   responses:
   - config:
@@ -100,9 +100,9 @@ registered_resources:
   models:
   - metadata:
       max_tokens: 2048
-    model_id: ibm-granite/granite-3.1-8b-instruct-UPDATE
+    model_id: default-model
     model_type: llm
-    provider_id: openstack-lightspeed-provider
+    provider_id: provider-default-model
     provider_model_id: ibm-granite/granite-3.1-8b-instruct-UPDATE
   - metadata:
       embedding_dimension: 384

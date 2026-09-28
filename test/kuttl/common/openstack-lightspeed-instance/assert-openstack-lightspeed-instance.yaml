@@ -258,7 +258,7 @@ spec:
               cpu: "2"
               memory: 8Gi
           env:
-            - name: OPENSTACK_LIGHTSPEED_PROVIDER_API_KEY
+            - name: PROVIDER_DEFAULT_MODEL_API_KEY
               valueFrom:
                 secretKeyRef:
                   key: apitoken
@@ -484,14 +484,17 @@ metadata:
   name: openstack-lightspeed
   namespace: openstack-lightspeed
 spec:
-  llmCredentials: openstack-lightspeed-apitoken
-  llmEndpoint: http://mock-llm-api-server-pod:8000/v1
-  llmEndpointType: openai
-  modelName: ibm-granite/granite-3.1-8b-instruct
+  defaultModel: default-model
+  models:
+    - name: default-model
+      llmEndpoint: http://mock-llm-api-server-pod:8000/v1
+      llmEndpointType: openai
+      llmCredentials: openstack-lightspeed-apitoken
+      modelName: ibm-granite/granite-3.1-8b-instruct
+      llmProjectID: test-project-id
+      llmDeploymentName: test-deployment-name
+      llmAPIVersion: v1
   tlsCACertBundle: openstack-lightspeed-cert
-  llmProjectID: test-project-id
-  llmDeploymentName: test-deployment-name
-  llmAPIVersion: v1
   console:
     resources:
       limits:
