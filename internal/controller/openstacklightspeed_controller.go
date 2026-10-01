@@ -20,6 +20,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"sync/atomic"
 
 	"github.com/go-logr/logr"
@@ -217,8 +219,8 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	if instance.Spec.MaxTokensForResponse == 0 {
-		instance.Spec.MaxTokensForResponse = apiv1beta1.OpenStackLightspeedDefaultValues.MaxTokensForResponse
+	if err := validateModelSelectionAndSetDefaults(Log, instance); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	// Log dev config parse errors so misconfigurations don't silently disable features.
@@ -252,6 +254,39 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 }
 
 // reconcileDelete reconciles the deletion of OpenStackLightspeed instance
+func validateModelSelectionAndSetDefaults(Log logr.Logger, instance *apiv1beta1.OpenStackLightspeed) error {
+	modelNames := map[string]struct{}{}
+	validModelNames := make([]string, 0, len(instance.Spec.Models))
+	for i := range instance.Spec.Models {
+		if instance.Spec.Models[i].MaxTokensForResponse == 0 {
+			instance.Spec.Models[i].MaxTokensForResponse = apiv1beta1.OpenStackLightspeedDefaultValues.MaxTokensForResponse
+		}
+		modelName := instance.Spec.Models[i].Name
+		modelNames[modelName] = struct{}{}
+		validModelNames = append(validModelNames, modelName)
+	}
+
+	if _, ok := modelNames[instance.Spec.DefaultModel]; !ok {
+		sort.Strings(validModelNames)
+		err := fmt.Errorf(
+			"spec.defaultModel %q must match one of spec.models[].name: [%s]",
+			instance.Spec.DefaultModel,
+			strings.Join(validModelNames, ", "),
+		)
+		Log.Error(err, "invalid model configuration")
+		instance.Status.Conditions.Set(condition.FalseCondition(
+			apiv1beta1.OpenStackLightspeedReadyCondition,
+			condition.ErrorReason,
+			condition.SeverityWarning,
+			"%s",
+			err.Error(),
+		))
+		return err
+	}
+
+	return nil
+}
+
 func (r *OpenStackLightspeedReconciler) reconcileDelete(
 	ctx context.Context,
 	helper *common_helper.Helper,

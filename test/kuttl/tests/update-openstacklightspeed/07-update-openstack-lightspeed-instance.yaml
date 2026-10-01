@@ -20,14 +20,17 @@ metadata:
   name: openstack-lightspeed
   namespace: openstack-lightspeed
 spec:
-  llmEndpoint: http://mock-llm-api-server-pod-UPDATE:8000/v1
-  llmEndpointType: rhoai_vllm
-  llmCredentials: openstack-lightspeed-apitoken-update
-  modelName: ibm-granite/granite-3.1-8b-instruct-UPDATE
   tlsCACertBundle: openstack-lightspeed-cert-update
-  llmProjectID: test-project-id-UPDATE
-  llmDeploymentName: test-deployment-name-UPDATE
-  llmAPIVersion: v1.1
+  defaultModel: default-model
+  models:
+    - name: default-model
+      llmEndpoint: http://mock-llm-api-server-pod-UPDATE:8000/v1
+      llmEndpointType: rhoai_vllm
+      llmCredentials: openstack-lightspeed-apitoken-update
+      modelName: ibm-granite/granite-3.1-8b-instruct-UPDATE
+      llmProjectID: test-project-id-UPDATE
+      llmDeploymentName: test-deployment-name-UPDATE
+      llmAPIVersion: v1.1
   dataverseExporter:
     feedback:
       enabled: false

@@ -8,28 +8,42 @@ field in its `spec`.
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `llmEndpoint` | Yes | URL of the LLM endpoint (e.g. `https://api.openai.com/v1`). Must start with `http://` or `https://`. |
-| `llmEndpointType` | Yes | Provider type. See [supported providers](configuration.md#supported-providers). |
-| `modelName` | Yes | Model name to use at `llmEndpoint`. |
-| `llmCredentials` | Yes | `Secret` name (same namespace) with the API token under key `apitoken`. |
-| `tlsCACertBundle` | No | `ConfigMap` name (same namespace) with a CA bundle for the LLM endpoint. |
-| `maxTokensForResponse` | No | Max response tokens. Minimum `1`. Defaults to `2048`. |
-| `llmProjectID` | No | Required by some providers (e.g. WatsonX). |
-| `llmDeploymentName` | No | Required by some providers (e.g. Azure OpenAI). |
-| `llmAPIVersion` | No | Required by some providers (e.g. Azure OpenAI). |
+| `defaultModel` | Yes | Default model alias selected for inference. Must match one of `models[].name`. |
+| `models` | Yes | List of configured models. Must contain at least one entry. |
+| `tlsCACertBundle` | No | Name of a `ConfigMap` containing additional CA certificates to merge into the shared trust bundle used by application components, including model connections. |
+
+## Models (`models[]`)
+
+Each item in `models[]` defines one selectable model alias and the
+provider/backend details used to serve it.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `models[].name` | Yes | Kubernetes-style model alias (used by `defaultModel` and request-time `model`). |
+| `models[].llmEndpoint` | Yes | URL of the LLM endpoint (e.g. `https://api.openai.com/v1`). Must start with `http://` or `https://`. |
+| `models[].llmEndpointType` | Yes | Provider type. See [supported providers](#supported-providers). |
+| `models[].llmCredentials` | Yes | `Secret` name (same namespace) with the API token under key `apitoken`. |
+| `models[].modelName` | Yes | Provider-native model name to use at the configured endpoint. |
+| `models[].maxTokensForResponse` | No | Max response tokens for this model. Minimum `1`. Defaults to `2048`. |
+| `models[].llmProjectID` | No | Required by some providers (e.g. WatsonX). |
+| `models[].llmDeploymentName` | No | Required by some providers (e.g. Azure OpenAI). |
+| `models[].llmAPIVersion` | No | Required by some providers (e.g. Azure OpenAI). |
+
+See [Multi-model request routing](usage.md#multi-model-request-routing) for how
+model aliases map to request fields (`provider` and `model`) at query time.
 
 ## Supported providers
 
 - `openai` — OpenAI-compatible endpoints (Ollama, vLLM, etc.)
-- `azure_openai` — Azure OpenAI (needs `llmDeploymentName`, `llmAPIVersion`)
-- `watsonx` — IBM watsonx.ai (needs `llmProjectID`)
+- `azure_openai` — Azure OpenAI (needs `models[].llmDeploymentName`, `models[].llmAPIVersion`)
+- `watsonx` — IBM watsonx.ai (needs `models[].llmProjectID`)
 - `rhoai_vllm` — vLLM via Red Hat OpenShift AI
 - `rhelai_vllm` — vLLM via RHEL AI
 - `gemini` — Google Gemini
 
 > [!TIP]
 > This list grows over time. Check
-> `oc explain openstacklightspeed.spec.llmEndpointType` on your cluster
+> `oc explain openstacklightspeed.spec.models.llmEndpointType` on your cluster
 > for the current, authoritative list.
 
 ## Logging
@@ -144,7 +158,6 @@ spec:
 
 By default, **RAG grounding is OKP-only** — the bundled community
 documentation is disabled unless you set `dev.okpRagOnly: false` (below).
-
 
 ## Quota enforcement
 

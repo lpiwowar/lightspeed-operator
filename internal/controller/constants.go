@@ -38,7 +38,6 @@ const (
 	OpenStackLightspeedAppServerServicePort        = 8443
 	OpenStackLightspeedAppServerServiceName        = "lightspeed-app-server"
 	OpenStackLightspeedAppServerNetworkPolicyName  = "lightspeed-app-server"
-	OpenStackLightspeedDefaultProvider             = "openstack-lightspeed-provider"
 	OpenStackLightspeedVectorDBPath                = "/rag/vector_db/os_product_docs"
 
 	// ---------------------------------------------------------------------------

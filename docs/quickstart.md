@@ -35,10 +35,13 @@ metadata:
   name: openstack-lightspeed
   namespace: openstack-lightspeed
 spec:
-  llmEndpoint: https://<llm-provider-host>:<port>/v1
-  llmEndpointType: <provider-type>
-  llmCredentials: openstack-lightspeed-apitoken
-  modelName: <model-name>
+  defaultModel: my-model
+  models:
+    - name: my-model
+      llmEndpoint: https://<llm-provider-host>:<port>/v1
+      llmEndpointType: <provider-type>
+      llmCredentials: openstack-lightspeed-apitoken
+      modelName: <model-name>
 ```
 
 Then apply both:
@@ -50,7 +53,8 @@ oc apply -f cr.yaml
 
 Self-hosted endpoint with a self-signed certificate? See
 [Installation Guide](install_guide.md) and [Configuration](configuration.md) for the full field
-reference.
+reference. For selecting non-default models in API requests, see
+[Multi-model request routing](usage.md#multi-model-request-routing).
 
 ## Open the console
 

@@ -135,10 +135,13 @@ metadata:
   name: openstack-lightspeed
   namespace: openstack
 spec:
-  llmEndpoint: $LLM_ENDPOINT
-  llmEndpointType: openai
-  llmCredentials: openstack-lightspeed-apitoken
-  modelName: $LLM_MODEL
+  defaultModel: default-model
+  models:
+    - name: default-model
+      llmEndpoint: $LLM_ENDPOINT
+      llmEndpointType: openai
+      llmCredentials: openstack-lightspeed-apitoken
+      modelName: $LLM_MODEL
 $(if [ -n "$CERT_SECRET_NAME" ]; then
   echo "  tlsCACertBundle: $CERT_SECRET_NAME"
 fi)

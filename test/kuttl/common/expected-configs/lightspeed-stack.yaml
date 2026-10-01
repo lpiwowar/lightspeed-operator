@@ -61,8 +61,8 @@ database:
     ssl_mode: verify-full
     user: ${env.POSTGRESQL_USER}
 inference:
-  default_model: ibm-granite/granite-3.1-8b-instruct
-  default_provider: openstack-lightspeed-provider
+  default_model: default-model
+  default_provider: provider-default-model
 mcp_servers: []
 name: Lightspeed Core Service (LCS)
 ogx:

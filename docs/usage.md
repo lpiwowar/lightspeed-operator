@@ -17,6 +17,34 @@ credentials needed to browse — see [Configuration](configuration.md) for the f
 keyed tiers). The bundled community documentation is also available, but
 only if you set `dev.okpRagOnly: false`.
 
+## Multi-model request routing
+
+When you configure multiple entries in `spec.models[]`, each entry defines:
+
+- a **model alias** (`spec.models[].name`)
+- a generated OGX **provider ID**: `provider-<alias>`
+- the upstream provider model name (`spec.models[].modelName`)
+
+In request payloads for `/query` and `/streaming_query`, use these fields to
+select a non-default model:
+
+- `provider`: the generated provider ID (`provider-<alias>`)
+- `model`: the model alias (`<alias>`)
+
+Example (explicit model selection):
+
+```json
+{
+  "query": "How can I check Nova services?",
+  "provider": "provider-another-model",
+  "model": "another-model"
+}
+```
+
+If `provider` and `model` are omitted, Lightspeed uses
+`spec.defaultModel` (and its corresponding provider
+`provider-<defaultModel>`).
+
 ## Cluster introspection (optional)
 
 Enabling the `rhoso_mcps` dev flag ([Configuration](configuration.md)) gives the
