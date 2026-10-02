@@ -67,12 +67,14 @@ const (
 //   - okpChunkFilterQuery: Solr filter query for OKP searches (default: version-aware query combining detected OpenStack and OCP versions)
 //   - okpRagOnly: when true, only OKP is used as a RAG source (default: true)
 //   - rhosMCP: configuration for the rhos-mcps sidecar (resources, container image override, and custom YAML config); config is deep-merged on top of the operator defaults, openstack.enabled and openshift.enabled are always overridden by the operator
+//   - resourcePollInterval: requeue/poll interval in seconds when dynamically watched CRD is missing or when rhoso_mcps is enabled because the cache-based watch only covers the operator namespace, so polling detects cross-namespace changes such as OpenStackControlPlane readiness, CA rotations, etc. (default: 60)
 type DevSpec struct {
 	FeatureFlags        []string `json:"featureFlags,omitempty"`
 	OKPChunkFilterQuery string   `json:"okpChunkFilterQuery,omitempty"`
 	OKPRagOnly          *bool    `json:"okpRagOnly,omitempty"`
 	// rhosMCP configures the rhos-mcps sidecar container (only used when the rhoso_mcps feature flag is enabled).
-	RhosMCP *RhosMCPSpec `json:"rhosMCP,omitempty"`
+	RhosMCP              *RhosMCPSpec `json:"rhosMCP,omitempty"`
+	ResourcePollInterval int          `json:"resourcePollInterval,omitempty"`
 }
 
 // RhosMCPSpec defines configuration for the rhos-mcps sidecar container.

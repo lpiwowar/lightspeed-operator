@@ -150,8 +150,9 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 			panic(r)
 		}
 
+		// 1) Restore subconditions first so Mirror tie-breaks on real LTTs
 		condition.RestoreLastTransitionTimes(&instance.Status.Conditions, savedConditions)
-		// update the Ready condition based on the sub conditions
+
 		if instance.Status.Conditions.AllSubConditionIsTrue() {
 			instance.Status.Conditions.MarkTrue(
 				condition.ReadyCondition, condition.ReadyMessage)
@@ -163,6 +164,9 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 			instance.Status.Conditions.Set(
 				instance.Status.Conditions.Mirror(condition.ReadyCondition))
 		}
+
+		// 2) Restore again so Ready LTT is preserved after aggregation
+		condition.RestoreLastTransitionTimes(&instance.Status.Conditions, savedConditions)
 
 		err := helper.PatchInstance(ctx, instance)
 		if err != nil {
@@ -187,7 +191,7 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 				}
 			}
 			if needsPoll {
-				result.RequeueAfter = ResourceCreationTimeout
+				result.RequeueAfter = getResourcePollInterval(instance)
 			}
 		}
 	}()
@@ -343,7 +347,7 @@ func (r *OpenStackLightspeedReconciler) reconcileStatus(
 					apiv1beta1.DeploymentsNotReadyMessage,
 					deploymentName,
 				))
-				return ctrl.Result{RequeueAfter: ResourceCreationTimeout}, nil
+				return ctrl.Result{RequeueAfter: getResourcePollInterval(instance)}, nil
 			}
 			Log.Error(err, "failed to get deployment", "deployment", deploymentName)
 			instance.Status.Conditions.Set(condition.FalseCondition(
@@ -363,7 +367,7 @@ func (r *OpenStackLightspeedReconciler) reconcileStatus(
 				apiv1beta1.DeploymentsNotReadyMessage,
 				deploymentName,
 			))
-			return ctrl.Result{RequeueAfter: ResourceCreationTimeout}, nil
+			return ctrl.Result{RequeueAfter: getResourcePollInterval(instance)}, nil
 		}
 	}
 
@@ -399,6 +403,10 @@ func (r *OpenStackLightspeedReconciler) reconcileStatus(
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OpenStackLightspeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := initClusterClient(mgr); err != nil {
+		return err
+	}
+
 	// Use Build instead of Complete to get the controller reference needed by WatchDynamicCRD.
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		For(&apiv1beta1.OpenStackLightspeed{}).

@@ -25,6 +25,9 @@ import (
 const (
 	// -- Operator Settings ------------------------------------------------------
 
+	// ResourceCreationTimeout is the max wait when polling for resources to
+	// become ready (e.g. TLS secrets). Also used as the default value for
+	// the requeue/poll interval from spec.dev.resourcePollInterval.
 	ResourceCreationTimeout = 60 * time.Second
 
 	// ---------------------------------------------------------------------------

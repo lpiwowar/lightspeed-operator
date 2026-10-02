@@ -22,9 +22,12 @@ import (
 	_ "embed" // Required for go:embed directives in this package
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 
 	common_cm "github.com/openstack-k8s-operators/lib-common/modules/common/configmap"
 	common_helper "github.com/openstack-k8s-operators/lib-common/modules/common/helper"
@@ -39,9 +42,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+)
+
+// clusterClient is a process-lifetime, uncached client used for cluster-wide
+// reads (not restricted to WATCH_NAMESPACE). It is initialized once from
+// SetupWithManager when possible, or lazily on first getRawClient call.
+var (
+	clusterClientMu sync.Mutex
+	clusterClient   client.Client
 )
 
 // toPtr returns a pointer to the given value.
@@ -49,21 +61,50 @@ func toPtr[T any](v T) *T {
 	return &v
 }
 
+// initClusterClient creates a single uncached cluster-wide client that shares
+// the manager's HTTP client and REST mapper, avoiding repeated client.New
+// allocations (HTTP transport + DynamicRESTMapper) on every reconcile.
+func initClusterClient(mgr ctrl.Manager) error {
+	c, err := client.New(mgr.GetConfig(), client.Options{
+		Scheme:     mgr.GetScheme(),
+		Mapper:     mgr.GetRESTMapper(),
+		HTTPClient: mgr.GetHTTPClient(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create cluster-wide client: %w", err)
+	}
+
+	clusterClientMu.Lock()
+	clusterClient = c
+	clusterClientMu.Unlock()
+	return nil
+}
+
 // getRawClient returns a raw client that is not restricted to WATCH_NAMESPACE.
 // This is useful for operations that need to query resources across all namespaces
-// cluster wide.
+// cluster wide. The client is created once and reused for the process lifetime.
 func getRawClient(helper *common_helper.Helper) (client.Client, error) {
+	clusterClientMu.Lock()
+	defer clusterClientMu.Unlock()
+
+	if clusterClient != nil {
+		return clusterClient, nil
+	}
+
+	// Fallback for tests / early calls before SetupWithManager.
+	// Transient failures are not sticky: the next call retries creation.
 	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	rawClient, err := client.New(cfg, client.Options{Scheme: helper.GetScheme()})
+	c, err := client.New(cfg, client.Options{Scheme: helper.GetScheme()})
 	if err != nil {
 		return nil, err
 	}
 
-	return rawClient, nil
+	clusterClient = c
+	return clusterClient, nil
 }
 
 // generateAppServerSelectorLabels returns a map of labels used as selectors
@@ -77,34 +118,31 @@ func generateAppServerSelectorLabels() map[string]string {
 	}
 }
 
-// getConfigMapResourceVersion retrieves the resource version of a ConfigMap.
-func getConfigMapResourceVersion(ctx context.Context, h *common_helper.Helper, name string, namespace string) (string, error) {
-	rawClient, err := getRawClient(h)
-	if err != nil {
-		return "", fmt.Errorf("failed to get raw client: %w", err)
-	}
-
+// getConfigMapContentHash returns a content hash of a ConfigMap's Data and
+// BinaryData (via lib-common), suitable for pod template annotations that
+// should only change when the ConfigMap content changes.
+func getConfigMapContentHash(ctx context.Context, h *common_helper.Helper, name string, namespace string) (string, error) {
 	cm := &corev1.ConfigMap{}
-	err = rawClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, cm)
+	err := h.GetClient().Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, cm)
 	if err != nil {
 		return "", fmt.Errorf("failed to get configmap %s: %w", name, err)
 	}
-	return cm.ResourceVersion, nil
+	hash, err := common_cm.Hash(cm)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash configmap %s: %w", name, err)
+	}
+	return hash, nil
 }
 
-// getSecretResourceVersion retrieves the resource version of a Secret.
-func getSecretResourceVersion(ctx context.Context, h *common_helper.Helper, name string, namespace string) (string, error) {
-	rawClient, err := getRawClient(h)
-	if err != nil {
-		return "", fmt.Errorf("failed to get raw client: %w", err)
-	}
-
-	secret := &corev1.Secret{}
-	err = rawClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, secret)
+// getSecretContentHash returns a content hash of a Secret (via lib-common
+// GetSecret), suitable for pod template annotations that should only change
+// when the Secret content changes.
+func getSecretContentHash(ctx context.Context, h *common_helper.Helper, name string, namespace string) (string, error) {
+	_, hash, err := common_secret.GetSecret(ctx, h, name, namespace)
 	if err != nil {
 		return "", fmt.Errorf("failed to get secret %s: %w", name, err)
 	}
-	return secret.ResourceVersion, nil
+	return hash, nil
 }
 
 // providerNameToEnvVarName converts a provider name to a valid environment variable name.
@@ -181,6 +219,24 @@ func getRhosMCPResources(instance *apiv1beta1.OpenStackLightspeed) corev1.Resour
 		}
 	}
 	return resources
+}
+
+// getResourcePollInterval returns the requeue/poll interval from
+// spec.dev.resourcePollInterval (seconds). Falls back to
+// ResourceCreationTimeout when unset, non-positive, unparsable, or too
+// large to convert to a positive time.Duration.
+func getResourcePollInterval(instance *apiv1beta1.OpenStackLightspeed) time.Duration {
+	devConfig, err := instance.ParseDevConfig()
+	if err != nil || devConfig.ResourcePollInterval <= 0 {
+		return ResourceCreationTimeout
+	}
+	// time.Duration is int64 nanoseconds. Seconds above MaxInt64/time.Second
+	// overflow to a negative duration on multiply; controller-runtime only
+	// schedules RequeueAfter when positive, so polling would stop silently.
+	if int64(devConfig.ResourcePollInterval) > int64(math.MaxInt64/time.Second) {
+		return ResourceCreationTimeout
+	}
+	return time.Duration(devConfig.ResourcePollInterval) * time.Second
 }
 
 // isRHOSOMCPEnabled returns true if the "rhoso_mcps" feature flag is present in the dev config.

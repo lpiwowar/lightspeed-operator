@@ -878,88 +878,88 @@ func getOGXLogLevel(instance *apiv1beta1.OpenStackLightspeed) string {
 	return logLevel
 }
 
-// buildConfigMapAnnotations builds annotations with configmap resource versions
-// so that changes to the configmaps trigger a deployment rollout.
+// buildConfigMapAnnotations builds annotations with ConfigMap/Secret content
+// hashes so that content changes trigger a deployment rollout.
 func buildConfigMapAnnotations(ctx context.Context, h *common_helper.Helper) (map[string]string, error) {
 	annotations := make(map[string]string)
 
-	lcoreVersion, err := getConfigMapResourceVersion(ctx, h, LCoreConfigCmName, h.GetBeforeObject().GetNamespace())
+	lcoreVersion, err := getConfigMapContentHash(ctx, h, LCoreConfigCmName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		// ConfigMap may not exist yet during initial creation
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get LCore configmap resource version: %w", err)
+			return nil, fmt.Errorf("failed to get LCore configmap content hash: %w", err)
 		}
 	} else {
 		annotations[LCoreConfigMapResourceVersionAnnotation] = lcoreVersion
 	}
 
-	ogxVersion, err := getConfigMapResourceVersion(ctx, h, OGXConfigCmName, h.GetBeforeObject().GetNamespace())
+	ogxVersion, err := getConfigMapContentHash(ctx, h, OGXConfigCmName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get OGX configmap resource version: %w", err)
+			return nil, fmt.Errorf("failed to get OGX configmap content hash: %w", err)
 		}
 	} else {
 		annotations[OGXConfigMapResourceVersionAnnotation] = ogxVersion
 	}
 
-	vectorDBScriptsVersion, err := getConfigMapResourceVersion(ctx, h, VectorDBScriptsConfigMapName, h.GetBeforeObject().GetNamespace())
+	vectorDBScriptsVersion, err := getConfigMapContentHash(ctx, h, VectorDBScriptsConfigMapName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get Vector DB scripts configmap resource version: %w", err)
+			return nil, fmt.Errorf("failed to get Vector DB scripts configmap content hash: %w", err)
 		}
 	} else {
 		annotations[VectorDBScriptsConfigMapVersionAnnotation] = vectorDBScriptsVersion
 	}
 
-	caBundleVersion, err := getConfigMapResourceVersion(ctx, h, CABundleConfigMapName, h.GetBeforeObject().GetNamespace())
+	caBundleVersion, err := getConfigMapContentHash(ctx, h, CABundleConfigMapName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get CA bundle configmap resource version: %w", err)
+			return nil, fmt.Errorf("failed to get CA bundle configmap content hash: %w", err)
 		}
 	} else {
 		annotations[CABundleConfigMapVersionAnnotation] = caBundleVersion
 	}
 
-	postgresSecretVersion, err := getSecretResourceVersion(ctx, h, PostgresSecretName, h.GetBeforeObject().GetNamespace())
+	postgresSecretVersion, err := getSecretContentHash(ctx, h, PostgresSecretName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get postgres secret resource version: %w", err)
+			return nil, fmt.Errorf("failed to get postgres secret content hash: %w", err)
 		}
 	} else {
 		annotations[PostgresSecretResourceVersionAnnotation] = postgresSecretVersion
 	}
 
-	mcpVersion, err := getConfigMapResourceVersion(ctx, h, MCPConfigYAMLConfigMapName, h.GetBeforeObject().GetNamespace())
+	mcpVersion, err := getConfigMapContentHash(ctx, h, MCPConfigYAMLConfigMapName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get MCP config configmap resource version: %w", err)
+			return nil, fmt.Errorf("failed to get MCP config configmap content hash: %w", err)
 		}
 	} else {
 		annotations[MCPConfigMapResourceVersionAnnotation] = mcpVersion
 	}
 
-	cloudsVersion, err := getConfigMapResourceVersion(ctx, h, CloudsYAMLConfigMapName, h.GetBeforeObject().GetNamespace())
+	cloudsVersion, err := getConfigMapContentHash(ctx, h, CloudsYAMLConfigMapName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get clouds.yaml configmap resource version: %w", err)
+			return nil, fmt.Errorf("failed to get clouds.yaml configmap content hash: %w", err)
 		}
 	} else {
 		annotations[CloudsYAMLConfigMapVersionAnnotation] = cloudsVersion
 	}
 
-	secureVersion, err := getSecretResourceVersion(ctx, h, SecureYAMLSecretName, h.GetBeforeObject().GetNamespace())
+	secureVersion, err := getSecretContentHash(ctx, h, SecureYAMLSecretName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get secure.yaml secret resource version: %w", err)
+			return nil, fmt.Errorf("failed to get secure.yaml secret content hash: %w", err)
 		}
 	} else {
 		annotations[SecureYAMLSecretVersionAnnotation] = secureVersion
 	}
 
-	caBundleSecretVersion, err := getSecretResourceVersion(ctx, h, CombinedCABundleSecretName, h.GetBeforeObject().GetNamespace())
+	caBundleSecretVersion, err := getSecretContentHash(ctx, h, CombinedCABundleSecretName, h.GetBeforeObject().GetNamespace())
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get CA bundle secret resource version: %w", err)
+			return nil, fmt.Errorf("failed to get CA bundle secret content hash: %w", err)
 		}
 	} else {
 		annotations[CombinedCABundleSecretVersionAnnotation] = caBundleSecretVersion

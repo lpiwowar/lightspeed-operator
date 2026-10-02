@@ -219,6 +219,7 @@ spec:
       - rhoso_mcps   # enables the read-only MCP introspection sidecar
     okpChunkFilterQuery: "product:(*openstack* OR *openshift*)"  # example override
     okpRagOnly: false  # include bundled community docs too, not just OKP
+    resourcePollInterval: 60  # requeue/poll interval in seconds (default: 60)
     rhosMCP:
       config: |
         debug: true
@@ -245,3 +246,8 @@ spec:
   set it if you understand exactly what you're overriding. `resources` and
   `containerImage` respectively configure the sidecar resource requirements
   and image.
+- `resourcePollInterval` — requeue/poll interval in seconds when a
+  dynamically watched CRD is missing or when `rhoso_mcps` is enabled
+  (the cache-based watch only covers the operator namespace, so polling
+  detects cross-namespace changes such as OpenStackControlPlane
+  readiness and CA rotations). Defaults to `60`.
