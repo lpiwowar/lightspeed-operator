@@ -62,6 +62,24 @@ graph TB
 source; the bundled community documentation is available too, but only if
 you explicitly opt in. See [Configuration](configuration.md) for details.
 
+## RHOKP container image
+
+When it comes to the [Red Hat Offline Knowledge Portal (RHOKP or sometimes OKP) container image][rhokp-image],
+and OpenStack Lightspeed, the following information might be relevant
+for development:
+
+- The [RHOKP container image][rhokp-image] has a time-based release with
+  a weekly cadence. For more detailed information, consult the
+  [RHOKP documentation][rhokp-docs].
+
+- Only **the latest version** of the [RHOSO documentation][rhoso-docs] available at
+  [docs.redhat.com][redhat-docs] during the [RHOKP container image][rhokp-image]
+  build time is present in the container image.
+
+- Only **the latest 7 versions** of the [OCP documentation][ocp-docs] available at
+  [docs.redhat.com][redhat-docs] during the RHOKP container image build time
+  are present in the container image.
+
 ## Pod security defaults
 
 Operator-managed workloads are hardened by default with explicit
@@ -80,3 +98,9 @@ validated. Current intentional exceptions are:
 
 If you change container startup behavior or image layout, re-validate
 writable paths before enabling/disabling `readOnlyRootFilesystem`.
+
+[rhokp-image]: https://catalog.redhat.com/en/software/containers/offline-knowledge-portal/rhokp-rhel9/680143c03b895f32bbd104c2
+[rhokp-docs]: https://docs.redhat.com/en/documentation/red_hat_offline_knowledge_portal
+[redhat-docs]: https://docs.redhat.com/en
+[ocp-docs]: https://docs.redhat.com/en/documentation/openshift_container_platform
+[rhoso-docs]: https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift
