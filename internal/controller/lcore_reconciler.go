@@ -95,13 +95,13 @@ func reconcileServiceAccount(ctx context.Context, h *common_helper.Helper, _ *ap
 }
 
 // reconcileSARRole ensures the SAR cluster role exists.
-func reconcileSARRole(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileSARRole(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	role := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   OpenStackLightspeedAppServerSARRoleName,
-			Labels: generateAppServerSelectorLabels(),
+			Name:   sarClusterRoleName(instance.Namespace),
+			Labels: clusterRBACLabels(instance.Namespace),
 		},
 	}
 
@@ -143,13 +143,13 @@ func reconcileSARRole(ctx context.Context, h *common_helper.Helper, _ *apiv1beta
 }
 
 // reconcileSARRoleBinding ensures the SAR cluster role binding exists.
-func reconcileSARRoleBinding(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileSARRoleBinding(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	rb := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   OpenStackLightspeedAppServerSARRoleBindingName,
-			Labels: generateAppServerSelectorLabels(),
+			Name:   sarClusterRoleBindingName(instance.Namespace),
+			Labels: clusterRBACLabels(instance.Namespace),
 		},
 	}
 
@@ -165,7 +165,7 @@ func reconcileSARRoleBinding(ctx context.Context, h *common_helper.Helper, _ *ap
 		rb.RoleRef = rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     OpenStackLightspeedAppServerSARRoleName,
+			Name:     sarClusterRoleName(instance.Namespace),
 		}
 		// Note: ClusterRoleBinding is cluster-scoped, no owner reference needed
 		return nil
@@ -179,16 +179,16 @@ func reconcileSARRoleBinding(ctx context.Context, h *common_helper.Helper, _ *ap
 	return nil
 }
 
-// reconcileAccessClusterRole ensures the lightspeed-access ClusterRole exists.
+// reconcileAccessClusterRole ensures the scope-specific access ClusterRole exists.
 // Bind this role to users who need OpenStack Lightspeed access; lcore authorizes
 // requests by checking their get permission on the /ls-access endpoint.
-func reconcileAccessClusterRole(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileAccessClusterRole(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
 	role := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   OpenStackLightspeedAccessClusterRoleName,
-			Labels: generateAppServerSelectorLabels(),
+			Name:   AccessClusterRoleName(instance.Namespace),
+			Labels: clusterRBACLabels(instance.Namespace),
 		},
 	}
 
@@ -540,10 +540,10 @@ func reconcileTLSSecret(ctx context.Context, h *common_helper.Helper, _ *apiv1be
 }
 
 // reconcileDeleteClusterRoleBindingByLabels deletes ClusterRoleBinding resources by labels.
-func reconcileDeleteClusterRoleBindingByLabels(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileDeleteClusterRoleBindingByLabels(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
-	labelSelector := labels.Set(generateAppServerSelectorLabels()).AsSelector()
+	labelSelector := labels.Set(clusterRBACLabels(instance.Namespace)).AsSelector()
 	matchingLabels := client.MatchingLabelsSelector{Selector: labelSelector}
 	deleteOptions := &client.DeleteAllOfOptions{
 		ListOptions: client.ListOptions{
@@ -560,10 +560,10 @@ func reconcileDeleteClusterRoleBindingByLabels(ctx context.Context, h *common_he
 }
 
 // reconcileDeleteClusterRoleByLabels deletes ClusterRole resources by labels.
-func reconcileDeleteClusterRoleByLabels(ctx context.Context, h *common_helper.Helper, _ *apiv1beta1.OpenStackLightspeed) error {
+func reconcileDeleteClusterRoleByLabels(ctx context.Context, h *common_helper.Helper, instance *apiv1beta1.OpenStackLightspeed) error {
 	logger := h.GetLogger()
 
-	labelSelector := labels.Set(generateAppServerSelectorLabels()).AsSelector()
+	labelSelector := labels.Set(clusterRBACLabels(instance.Namespace)).AsSelector()
 	matchingLabels := client.MatchingLabelsSelector{Selector: labelSelector}
 	deleteOptions := &client.DeleteAllOfOptions{
 		ListOptions: client.ListOptions{

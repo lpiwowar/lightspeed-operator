@@ -207,9 +207,11 @@ func main() {
 	}
 
 	defaultNamespaces := make(map[string]cache.Config)
-	for _, namespace := range watchNamespaces {
-		defaultNamespaces[namespace] = cache.Config{}
-		setupLog.Info(fmt.Sprintf("openstack-lightspeed operator watches %s namespace", namespace))
+	if len(watchNamespaces) == 0 {
+		setupLog.Info("openstack-lightspeed operator watches all namespaces")
+	} else {
+		defaultNamespaces[watchNamespaces[0]] = cache.Config{}
+		setupLog.Info(fmt.Sprintf("openstack-lightspeed operator watches %s namespace", watchNamespaces[0]))
 	}
 
 	cfg := ctrl.GetConfigOrDie()
@@ -251,15 +253,16 @@ func main() {
 	lightspeedv1beta1.SetupDefaults()
 
 	if err = (&controller.OpenStackLightspeedReconciler{
-		Client:  mgr.GetClient(),
-		Kclient: kclient,
-		Scheme:  mgr.GetScheme(),
+		Client:             mgr.GetClient(),
+		Kclient:            kclient,
+		Scheme:             mgr.GetScheme(),
+		WatchAllNamespaces: len(watchNamespaces) == 0,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackLightspeed")
 		os.Exit(1)
 	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err := webhookv1beta1.SetupOpenStackLightspeedWebhookWithManager(mgr); err != nil {
+		if err := webhookv1beta1.SetupOpenStackLightspeedWebhookWithManager(mgr, len(watchNamespaces) == 0); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackLightspeed")
 			os.Exit(1)
 		}
@@ -302,18 +305,21 @@ func main() {
 	}
 }
 
-// getWatchNamespaces returns a list of namespaces the operator should be watching for changes.
-// Note that this functions expects comma separated list in the WATCH_NAMESPACE env var.
+// getWatchNamespaces returns the manager cache scope from WATCH_NAMESPACES.
+// An empty, present value deliberately represents an all-namespaces scope.
 func getWatchNamespaces() ([]string, error) {
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
+	const watchNamespacesEnvVar = "WATCH_NAMESPACES"
 
-	ns, found := os.LookupEnv(watchNamespaceEnvVar)
+	ns, found := os.LookupEnv(watchNamespacesEnvVar)
 	if !found {
-		return []string{}, fmt.Errorf("%s must be set", watchNamespaceEnvVar)
+		return nil, fmt.Errorf("%s must be set (use an empty value to watch all namespaces)", watchNamespacesEnvVar)
+	}
+	if ns == "" {
+		return nil, nil
+	}
+	if strings.Contains(ns, ",") {
+		return nil, fmt.Errorf("%s must name at most one namespace; MultiNamespace installations are unsupported", watchNamespacesEnvVar)
 	}
 
-	return strings.Split(ns, ","), nil
+	return []string{ns}, nil
 }

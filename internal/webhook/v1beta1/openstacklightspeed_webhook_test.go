@@ -62,7 +62,7 @@ func TestValidateCreate(t *testing.T) {
 	}{
 		{name: "first instance", obj: instance},
 		{name: "different namespace", obj: instance, objects: []client.Object{otherNamespace}},
-		{name: "duplicate", obj: instance, objects: []client.Object{existing}, checkErr: apierrors.IsInvalid, message: `metadata.namespace: Forbidden: only one OpenStackLightspeed instance per namespace is allowed; "existing" already exists`, causeField: "metadata.namespace"},
+		{name: "duplicate", obj: instance, objects: []client.Object{existing}, checkErr: apierrors.IsInvalid, message: `metadata.namespace: Forbidden: only one OpenStackLightspeed instance in the operator watch scope is allowed; "existing" already exists`, causeField: "metadata.namespace"},
 		{name: "terminating instance still blocks creation", obj: instance, objects: []client.Object{terminating}, checkErr: apierrors.IsInvalid, causeField: "metadata.namespace"},
 		{name: "list failure denies creation", obj: instance, listErr: errors.New("API unavailable"), checkErr: apierrors.IsInternalError, message: "API unavailable"},
 		{name: "unexpected object", obj: &corev1.Secret{}, checkErr: func(err error) bool { return err != nil }, message: "expected an OpenStackLightspeed object"},
@@ -95,6 +95,21 @@ func TestValidateCreate(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestValidateCreateAllNamespaces(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := lightspeedv1beta1.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	instance := &lightspeedv1beta1.OpenStackLightspeed{ObjectMeta: metav1.ObjectMeta{Name: "new", Namespace: "target"}}
+	existing := &lightspeedv1beta1.OpenStackLightspeed{ObjectMeta: metav1.ObjectMeta{Name: "existing", Namespace: "other"}}
+	reader := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existing).Build()
+	validator := &OpenStackLightspeedCustomValidator{Reader: reader, WatchAllNamespaces: true}
+	_, err := validator.ValidateCreate(context.Background(), instance)
+	if !apierrors.IsInvalid(err) || !strings.Contains(err.Error(), "operator watch scope") {
+		t.Fatalf("expected cross-namespace duplicate to be rejected, got %v", err)
 	}
 }
 

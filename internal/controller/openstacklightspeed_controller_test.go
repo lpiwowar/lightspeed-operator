@@ -175,14 +175,15 @@ func TestReconcileInstanceCount(t *testing.T) {
 		listErr   error
 		wantError string
 		reconcile bool
+		status    bool
 	}{
 		{name: "no instances", request: first.Name},
-		{name: "single instance", instances: []*apiv1beta1.OpenStackLightspeed{first}, request: first.Name, reconcile: true},
-		{name: "other namespace is ignored", instances: []*apiv1beta1.OpenStackLightspeed{first, otherNamespace}, request: first.Name, reconcile: true},
+		{name: "single instance", instances: []*apiv1beta1.OpenStackLightspeed{first}, request: first.Name, reconcile: true, status: true},
+		{name: "other namespace is ignored", instances: []*apiv1beta1.OpenStackLightspeed{first, otherNamespace}, request: first.Name, reconcile: true, status: true},
 		{name: "deleted request is ignored", instances: []*apiv1beta1.OpenStackLightspeed{first}, request: "deleted"},
-		{name: "multiple instances block first", instances: []*apiv1beta1.OpenStackLightspeed{first, second}, request: first.Name, wantError: "only one OpenStackLightspeed instance per namespace is allowed"},
-		{name: "multiple instances block second", instances: []*apiv1beta1.OpenStackLightspeed{first, second}, request: second.Name, wantError: "only one OpenStackLightspeed instance per namespace is allowed"},
-		{name: "list error is returned", instances: []*apiv1beta1.OpenStackLightspeed{first}, request: first.Name, listErr: listErr, wantError: listErr.Error()},
+		{name: "multiple instances block first", instances: []*apiv1beta1.OpenStackLightspeed{first, second}, request: first.Name, status: true},
+		{name: "multiple instances block second", instances: []*apiv1beta1.OpenStackLightspeed{first, second}, request: second.Name, status: true},
+		{name: "list error is returned", instances: []*apiv1beta1.OpenStackLightspeed{first}, request: first.Name, listErr: listErr, wantError: listErr.Error(), status: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			builder := fake.NewClientBuilder().WithScheme(scheme).
@@ -218,11 +219,40 @@ func TestReconcileInstanceCount(t *testing.T) {
 				if err := fakeClient.Get(ctx, client.ObjectKeyFromObject(instance), actual); err != nil {
 					t.Fatal(err)
 				}
-				wantReconciled := tt.reconcile && instance.Namespace == first.Namespace && instance.Name == tt.request
-				if (len(actual.Finalizers) > 0) != wantReconciled || (len(actual.Status.Conditions) > 0) != wantReconciled {
+				isRequested := instance.Namespace == first.Namespace && instance.Name == tt.request
+				wantFinalizer := tt.reconcile && isRequested
+				wantStatus := tt.status && isRequested
+				if (len(actual.Finalizers) > 0) != wantFinalizer || (len(actual.Status.Conditions) > 0) != wantStatus {
 					t.Errorf("unexpected reconciliation of %s/%s: finalizers=%v, conditions=%v",
 						actual.Namespace, actual.Name, actual.Finalizers, actual.Status.Conditions)
 				}
+			}
+		})
+	}
+}
+
+func TestSingletonDuplicatesUsesEffectiveWatchScope(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := apiv1beta1.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	first := &apiv1beta1.OpenStackLightspeed{ObjectMeta: metav1.ObjectMeta{Name: "first", Namespace: "one"}}
+	second := &apiv1beta1.OpenStackLightspeed{ObjectMeta: metav1.ObjectMeta{Name: "second", Namespace: "two"}}
+	client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(first, second).Build()
+
+	for _, tt := range []struct {
+		name      string
+		watchAll  bool
+		wantCount int
+	}{
+		{name: "namespace scope", wantCount: 1},
+		{name: "all namespaces scope", watchAll: true, wantCount: 2},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &OpenStackLightspeedReconciler{Client: client, WatchAllNamespaces: tt.watchAll}
+			count, err := r.singletonDuplicates(context.Background(), first)
+			if err != nil || count != tt.wantCount {
+				t.Fatalf("got count=%d, err=%v; want %d, nil", count, err, tt.wantCount)
 			}
 		})
 	}

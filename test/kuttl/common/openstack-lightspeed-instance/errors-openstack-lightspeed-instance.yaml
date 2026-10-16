@@ -11,17 +11,17 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: lightspeed-app-server-sar-role
+  name: lightspeed-sar-role-fab9e71336d4
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: lightspeed-access
+  name: lightspeed-access-fab9e71336d4
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: lightspeed-app-server-sar-role-binding
+  name: lightspeed-sar-binding-fab9e71336d4
 ---
 apiVersion: apps/v1
 kind: Deployment

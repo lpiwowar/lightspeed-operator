@@ -33,18 +33,19 @@ import (
 )
 
 // SetupOpenStackLightspeedWebhookWithManager registers the validating webhook.
-func SetupOpenStackLightspeedWebhookWithManager(mgr ctrl.Manager) error {
+func SetupOpenStackLightspeedWebhookWithManager(mgr ctrl.Manager, watchAllNamespaces bool) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&lightspeedv1beta1.OpenStackLightspeed{}).
-		WithValidator(&OpenStackLightspeedCustomValidator{Reader: mgr.GetAPIReader()}).
+		WithValidator(&OpenStackLightspeedCustomValidator{Reader: mgr.GetAPIReader(), WatchAllNamespaces: watchAllNamespaces}).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/validate-lightspeed-openstack-org-v1beta1-openstacklightspeed,mutating=false,failurePolicy=fail,sideEffects=None,groups=lightspeed.openstack.org,resources=openstacklightspeeds,verbs=create,versions=v1beta1,name=vopenstacklightspeed-v1beta1.kb.io,admissionReviewVersions=v1
 
-// OpenStackLightspeedCustomValidator rejects additional instances in a namespace.
+// OpenStackLightspeedCustomValidator rejects additional instances in the effective watch scope.
 type OpenStackLightspeedCustomValidator struct {
-	Reader client.Reader
+	Reader             client.Reader
+	WatchAllNamespaces bool
 }
 
 var _ webhook.CustomValidator = &OpenStackLightspeedCustomValidator{}
@@ -59,14 +60,18 @@ func (v *OpenStackLightspeedCustomValidator) ValidateCreate(ctx context.Context,
 	// Read directly from the API server to avoid cache lag. Concurrent creates
 	// can still pass this check, so the controller retains its duplicate guard.
 	var instances lightspeedv1beta1.OpenStackLightspeedList
-	if err := v.Reader.List(ctx, &instances, client.InNamespace(instance.Namespace)); err != nil {
+	var options []client.ListOption
+	if !v.WatchAllNamespaces {
+		options = append(options, client.InNamespace(instance.Namespace))
+	}
+	if err := v.Reader.List(ctx, &instances, options...); err != nil {
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to check existing OpenStackLightspeed instances: %w", err))
 	}
 	if len(instances.Items) > 0 {
 		errs := field.ErrorList{
 			field.Forbidden(
 				field.NewPath("metadata", "namespace"),
-				fmt.Sprintf("only one OpenStackLightspeed instance per namespace is allowed; %q already exists", instances.Items[0].Name),
+				fmt.Sprintf("only one OpenStackLightspeed instance in the operator watch scope is allowed; %q already exists", instances.Items[0].Name),
 			),
 		}
 		return nil, apierrors.NewInvalid(

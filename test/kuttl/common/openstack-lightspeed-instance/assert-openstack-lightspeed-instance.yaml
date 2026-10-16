@@ -138,12 +138,9 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: lightspeed-app-server-sar-role
+  name: lightspeed-sar-role-fab9e71336d4
   labels:
-    app.kubernetes.io/component: app-server
-    app.kubernetes.io/managed-by: openstack-lightspeed-operator
-    app.kubernetes.io/name: openstack-lightspeed-app-server
-    app.kubernetes.io/part-of: openstack-lightspeed
+    lightspeed.openstack.org/rbac-scope: fab9e71336d4
 rules:
   - apiGroups:
       - authorization.k8s.io
@@ -176,12 +173,9 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: lightspeed-access
+  name: lightspeed-access-fab9e71336d4
   labels:
-    app.kubernetes.io/component: app-server
-    app.kubernetes.io/managed-by: openstack-lightspeed-operator
-    app.kubernetes.io/name: openstack-lightspeed-app-server
-    app.kubernetes.io/part-of: openstack-lightspeed
+    lightspeed.openstack.org/rbac-scope: fab9e71336d4
 rules:
   - nonResourceURLs:
       - /ls-access
@@ -191,16 +185,13 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: lightspeed-app-server-sar-role-binding
+  name: lightspeed-sar-binding-fab9e71336d4
   labels:
-    app.kubernetes.io/component: app-server
-    app.kubernetes.io/managed-by: openstack-lightspeed-operator
-    app.kubernetes.io/name: openstack-lightspeed-app-server
-    app.kubernetes.io/part-of: openstack-lightspeed
+    lightspeed.openstack.org/rbac-scope: fab9e71336d4
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: lightspeed-app-server-sar-role
+  name: lightspeed-sar-role-fab9e71336d4
 subjects:
   - kind: ServiceAccount
     name: lightspeed-app-server

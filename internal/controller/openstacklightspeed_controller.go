@@ -46,8 +46,9 @@ import (
 // OpenStackLightspeedReconciler reconciles a OpenStackLightspeed object
 type OpenStackLightspeedReconciler struct {
 	client.Client
-	Scheme  *runtime.Scheme
-	Kclient kubernetes.Interface
+	Scheme             *runtime.Scheme
+	Kclient            kubernetes.Interface
+	WatchAllNamespaces bool
 }
 
 // GetLogger returns a logger object with a prefix of "controller.name" and additional controller context fields
@@ -66,13 +67,13 @@ func (r *OpenStackLightspeedReconciler) GetLogger(ctx context.Context) logr.Logg
 // so it must hold that permission itself (K8s RBAC escalation prevention).
 // +kubebuilder:rbac:groups="",resources=secrets,resourceNames=pull-secret,verbs=get
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get
-// +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch
-// +kubebuilder:rbac:groups=apps,resources=deployments,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch
-// +kubebuilder:rbac:groups="",resources=configmaps,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch;delete
-// +kubebuilder:rbac:groups="",resources=secrets,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch;delete;deletecollection
-// +kubebuilder:rbac:groups="",resources=services,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch
-// +kubebuilder:rbac:groups="",resources=serviceaccounts,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch
-// +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,namespace=openstack-lightspeed,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;patch;delete;deletecollection
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;create;patch
 
 // Reconcile reads the state of the cluster for a OpenStackLightspeed object and makes changes towards the state defined in the spec.
 func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, e error) {
@@ -152,6 +153,21 @@ func (r *OpenStackLightspeedReconciler) Reconcile(ctx context.Context, req ctrl.
 		if err := r.reconcileDelete(ctx, helper, instance); err != nil {
 			return ctrl.Result{}, err
 		}
+		return ctrl.Result{}, nil
+	}
+
+	duplicates, err := r.singletonDuplicates(ctx, instance)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if duplicates > 1 {
+		instance.Status.Conditions.Set(condition.FalseCondition(
+			apiv1beta1.OpenStackLightspeedReadyCondition,
+			"SingletonViolation",
+			condition.SeverityWarning,
+			"OpenStackLightspeed singleton violation: found %d instances in the operator watch scope; workload reconciliation is paused",
+			duplicates,
+		))
 		return ctrl.Result{}, nil
 	}
 
@@ -308,21 +324,43 @@ func (r *OpenStackLightspeedReconciler) reconcileStatus(
 	return ctrl.Result{}, nil
 }
 
-// GetOpenStackLightspeed returns the instance matching the request, or nil if none matches.
-// It returns an error if listing fails or more than one instance exists in the namespace.
+// GetOpenStackLightspeed returns the instance matching the request, or nil if it no longer exists.
 func (r *OpenStackLightspeedReconciler) GetOpenStackLightspeed(ctx context.Context, req ctrl.Request) (*apiv1beta1.OpenStackLightspeed, error) {
-	instances := &apiv1beta1.OpenStackLightspeedList{}
-	if err := r.List(ctx, instances, client.InNamespace(req.Namespace)); err != nil {
+	instance := &apiv1beta1.OpenStackLightspeed{}
+	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
+		if k8s_errors.IsNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
-	if len(instances.Items) > 1 {
-		return nil, fmt.Errorf("only one OpenStackLightspeed instance per namespace is allowed; found %d in namespace %q",
-			len(instances.Items), req.Namespace)
+	return instance, nil
+}
+
+func (r *OpenStackLightspeedReconciler) singletonDuplicates(ctx context.Context, instance *apiv1beta1.OpenStackLightspeed) (int, error) {
+	instances := &apiv1beta1.OpenStackLightspeedList{}
+	var options []client.ListOption
+	if !r.WatchAllNamespaces {
+		options = append(options, client.InNamespace(instance.Namespace))
 	}
-	if len(instances.Items) == 0 || instances.Items[0].Name != req.Name {
-		return nil, nil
+	if err := r.List(ctx, instances, options...); err != nil {
+		return 0, err
 	}
-	return &instances.Items[0], nil
+	return len(instances.Items), nil
+}
+
+// NotifyAllOpenStackLightspeedsOnScope requeues every instance in the effective
+// manager scope. Deletion of one duplicate therefore wakes the remaining CR.
+func (r *OpenStackLightspeedReconciler) NotifyAllOpenStackLightspeedsOnScope(ctx context.Context, _ client.Object) []ctrl.Request {
+	var lightspeedList apiv1beta1.OpenStackLightspeedList
+	if err := r.List(ctx, &lightspeedList); err != nil {
+		return nil
+	}
+
+	requests := make([]ctrl.Request, 0, len(lightspeedList.Items))
+	for _, item := range lightspeedList.Items {
+		requests = append(requests, ctrl.Request{NamespacedName: client.ObjectKeyFromObject(&item)})
+	}
+	return requests
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -333,6 +371,7 @@ func (r *OpenStackLightspeedReconciler) SetupWithManager(mgr ctrl.Manager) error
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&apiv1beta1.OpenStackLightspeed{}).
+		Watches(&apiv1beta1.OpenStackLightspeed{}, handler.EnqueueRequestsFromMapFunc(r.NotifyAllOpenStackLightspeedsOnScope)).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&rbacv1.ClusterRole{}).

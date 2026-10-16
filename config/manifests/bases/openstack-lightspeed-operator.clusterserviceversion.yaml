@@ -48,12 +48,6 @@ spec:
       - kind: ServiceAccount
         name: lightspeed-app-server
         version: v1
-      - kind: ClusterRole
-        name: lightspeed-app-server-sar-role
-        version: v1
-      - kind: ClusterRoleBinding
-        name: lightspeed-app-server-sar-role-binding
-        version: v1
       - kind: Secret
         name: lightspeed-postgres-bootstrap
         version: v1
@@ -102,13 +96,13 @@ spec:
           standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.'
         displayName: Dataverse Exporter Log Level
         path: dataverseExporter.logLevel
+      - description: DefaultModel is the model alias selected by default for inference.
+        displayName: Default Model
+        path: defaultModel
       - description: 'Log level for the lightspeed-service-api container. Supports
           standard Python log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.'
         displayName: Lightspeed Stack Log Level
         path: lcore.logLevel
-      - description: DefaultModel is the model alias selected by default for inference.
-        displayName: Default Model
-        path: defaultModel
       - description: Models configures available LLM models.
         displayName: Models
         path: models
@@ -120,8 +114,9 @@ spec:
           (e.g., "core=debug,providers=info").
         displayName: OGX Log Level
         path: ogx.logLevel
-      - description: ConfigMap name containing a CA certificates bundle used for all
-          configured models.
+      - description: |-
+          Name of a ConfigMap containing additional CA certificates to merge into
+          the shared trust bundle used by application components, including model connections.
         displayName: TLS CA Certificate Bundle
         path: tlsCACertBundle
       version: v1beta1
@@ -144,9 +139,9 @@ spec:
     type: OwnNamespace
   - supported: true
     type: SingleNamespace
-  - supported: true
-    type: MultiNamespace
   - supported: false
+    type: MultiNamespace
+  - supported: true
     type: AllNamespaces
   keywords:
   - ai

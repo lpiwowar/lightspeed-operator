@@ -21,8 +21,8 @@ if [[ -z "$crc_host_ip" ]]; then
     echo "No IPv4 address found on the crc interface. This helper requires a local Linux CRC cluster." >&2
     exit 1
 fi
-if [[ -z "$WATCH_NAMESPACE" || "$WATCH_NAMESPACE" == *,* ]]; then
-    echo "Local webhook development requires one WATCH_NAMESPACE." >&2
+if [[ -z "$WATCH_NAMESPACES" || "$WATCH_NAMESPACES" == *,* ]]; then
+	 echo "Local webhook development requires one WATCH_NAMESPACES value." >&2
     exit 1
 fi
 
@@ -46,7 +46,7 @@ openssl req -newkey rsa:2048 -nodes -x509 -days 30 \
 ca_bundle=$(openssl base64 -A -in "$WEBHOOK_CERT_DIR/tls.crt")
 "$OC" create --dry-run=client --validate=false -f config/webhook/manifests.yaml -o json | \
     jq --arg name "$webhook_name" --arg url "https://$crc_host_ip:$WEBHOOK_PORT" \
-       --arg ca "$ca_bundle" --arg namespace "$WATCH_NAMESPACE" '
+       --arg ca "$ca_bundle" --arg namespace "$WATCH_NAMESPACES" '
         .metadata.name = $name |
         .webhooks |= map(
             .clientConfig = {url: ($url + .clientConfig.service.path), caBundle: $ca} |
@@ -87,7 +87,7 @@ for ((attempt=0; attempt<60; attempt++)); do
     if curl --noproxy '*' --fail --silent --max-time 1 "http://127.0.0.1:$HEALTH_PORT/readyz/webhook" >/dev/null; then
         registered=true
         "$OC" apply -f "$WEBHOOK_CERT_DIR/webhook.json"
-        echo "Local webhook registered at https://$crc_host_ip:$WEBHOOK_PORT for namespace $WATCH_NAMESPACE."
+        echo "Local webhook registered at https://$crc_host_ip:$WEBHOOK_PORT for namespace $WATCH_NAMESPACES."
         echo "The API server must be able to reach this address and port. Press Ctrl+C to stop and clean up."
         wait "$manager_pid"
         exit 0

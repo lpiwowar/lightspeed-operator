@@ -22,6 +22,11 @@ patches:
             volumeMounts:
             - mountPath: /tmp/k8s-webhook-server/serving-certs
               $patch: delete
+            env:
+            - name: WATCH_NAMESPACES
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['olm.targetNamespaces']
           volumes:
           - name: webhook-certs
             $patch: delete

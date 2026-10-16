@@ -41,7 +41,7 @@ import (
 )
 
 // clusterClient is a process-lifetime, uncached client used for cluster-wide
-// reads (not restricted to WATCH_NAMESPACE). It is initialized once from
+// reads (not restricted to WATCH_NAMESPACES). It is initialized once from
 // SetupWithManager when possible, or lazily on first getRawClient call.
 var (
 	clusterClientMu sync.Mutex
@@ -72,7 +72,7 @@ func initClusterClient(mgr ctrl.Manager) error {
 	return nil
 }
 
-// getRawClient returns a raw client that is not restricted to WATCH_NAMESPACE.
+// getRawClient returns a raw client that is not restricted to WATCH_NAMESPACES.
 // This is useful for operations that need to query resources across all namespaces
 // cluster wide. The client is created once and reused for the process lifetime.
 func getRawClient(helper *common_helper.Helper) (client.Client, error) {
