@@ -29,6 +29,7 @@ jobs:
         run: |
           SHA=${{ github.sha }}
           VERSION="0.1.0-${SHA::7}"
+          IMAGE_VERSION="${VERSION%-*}"
           IMAGE_TAG_BASE=${REGISTRY}/${IMAGE_ORG}/${OPERATOR_NAME}
           OPERATOR_IMAGE=${IMAGE_TAG_BASE}:v${VERSION}
           BUNDLE_IMAGE=${IMAGE_TAG_BASE}-bundle:v${VERSION}
@@ -46,6 +47,7 @@ jobs:
           CATALOG_IMAGE_LATEST=${IMAGE_TAG_BASE}-catalog:${LATEST_TAG}
 
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
           echo "IMAGE_TAG_BASE=$IMAGE_TAG_BASE" >> $GITHUB_ENV
 
           echo "OPERATOR_IMAGE=$OPERATOR_IMAGE" >> $GITHUB_ENV
@@ -77,6 +79,9 @@ jobs:
           password: ${{ secrets.REDHATIO_PASSWORD }}
 
       - name: Build operator image
+        env:
+          STREAM: ${{ github.head_ref || github.ref_name }}
+          GIT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           make docker-build IMG=$OPERATOR_IMAGE
           podman tag $OPERATOR_IMAGE $OPERATOR_IMAGE_LATEST
