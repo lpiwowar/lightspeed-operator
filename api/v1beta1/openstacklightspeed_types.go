@@ -30,7 +30,7 @@ const (
 	OpenStackLightspeedContainerImage = "quay.io/openstack-lightspeed/rag-content:os-docs-2026.1-ogx"
 
 	// LCoreContainerImage is the fall-back container image for LCore
-	LCoreContainerImage = "quay.io/lightspeed-core/lightspeed-stack:dev-latest@sha256:7468e043c9b20bb9e2e1cc2af819d6d054db6886aa3655a48b911f04b1d71ea6"
+	LCoreContainerImage = "quay.io/lightspeed-core/lightspeed-stack:dev-latest@sha256:68976749d8a5ff899369ee10224675c5d49cdac34ed5bafbc0e4554af71c74b7"
 
 	// OGXContainerImage is the fall-back container image for OGX.
 	OGXContainerImage = LCoreContainerImage
